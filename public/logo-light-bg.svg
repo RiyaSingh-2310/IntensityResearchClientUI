@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 48" role="img" aria-label="Intensity Research">
+  <defs>
+    <linearGradient id="g" x1="4" y1="2" x2="38" y2="40" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#3A66FF"/>
+      <stop offset="1" stop-color="#22C7E6"/>
+    </linearGradient>
+  </defs>
+  <g transform="translate(0 4)">
+    <rect width="40" height="40" rx="11" fill="url(#g)"/>
+    <circle cx="12" cy="12.6" r="2.7" fill="#fff"/>
+    <rect x="9.4" y="17.5" width="5.2" height="13" rx="2.6" fill="#fff"/>
+    <rect x="17.4" y="13.5" width="5.2" height="17" rx="2.6" fill="#fff" fill-opacity=".92"/>
+    <rect x="25.4" y="8.5" width="5.2" height="22" rx="2.6" fill="#fff" fill-opacity=".84"/>
+  </g>
+  <text x="52" y="25" fill="#0B1324" font-family="Sora, Inter, 'Segoe UI', Arial, sans-serif" font-size="21" font-weight="600" letter-spacing="-0.4">Intensity</text>
+  <text x="53" y="40" fill="#2C55E8" font-family="Inter, 'Segoe UI', Arial, sans-serif" font-size="9" font-weight="600" letter-spacing="3.4">RESEARCH</text>
+</svg>

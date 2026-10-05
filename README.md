@@ -1,75 +1,40 @@
-# React + TypeScript + Vite
+# Intensity Research — Client UI
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Panelist web app for [Intensity Research](https://intensityresearch.com/): registration with profile questions, email verification, login, assigned surveys, points, payout requests, and profile settings.
 
-Currently, two official plugins are available:
+Built with React 19, TypeScript, Vite, Tailwind CSS v4, Radix UI, and React Router.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Getting started
 
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
+```bash
+npm install
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://npmx.dev/package/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://npmx.dev/package/eslint-plugin-react-dom) for React-specific lint rules:
+| Script            | Purpose                               |
+| ----------------- | ------------------------------------- |
+| `npm run dev`     | Start the Vite dev server             |
+| `npm run build`   | Type-check and build to `dist/`       |
+| `npm run lint`    | Run ESLint                            |
+| `npm run preview` | Preview the production build locally  |
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Configuration
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+Optional environment variables (for example in `.env.local`):
 
-```
+| Variable              | Default                                     |
+| --------------------- | ------------------------------------------- |
+| `VITE_API_BASE_URL`   | `https://intensityresearch.com/intensityapi` |
+| `VITE_CLIENT_BASE_URL`| Current browser origin                      |
+
+API reference: <https://intensityresearch.com/intensityapi/docs/>
+
+## Project structure
+
+- `src/services/` — API calls (`http.ts` handles the response envelope, auth token, and 401 handling)
+- `src/lib/` — mapping and helpers shared by pages
+- `src/content/` and `src/config/brand.ts` — page copy and brand details
+- `src/components/` — UI primitives (`ui/`), layout, and feature components
+- `src/pages/` — public, auth, and panelist pages
+
+Static hosting rewrites for client-side routing are included in `public/` (`_redirects`, `staticwebapp.config.json`, `web.config`).

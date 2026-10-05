@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#060a14" />
+    <meta name="color-scheme" content="dark light" />
+    <meta
+      name="description"
+      content="Intensity Research is a market research participant panel. Share your perspective in research studies, earn points, and redeem them for rewards."
+    />
+    <meta property="og:site_name" content="Intensity Research" />
+    <meta property="og:title" content="Intensity Research — Participant Portal" />
+    <meta
+      property="og:description"
+      content="Join the Intensity Research panel, take part in studies matched to your profile, and redeem rewards."
+    />
+    <meta property="og:url" content="https://intensityresearch.com/" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <title>Intensity Research — Participant Portal</title>
+    <script>
+      try {
+        if (localStorage.getItem('ir.theme') === 'light') {
+          document.documentElement.dataset.theme = 'light'
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#f5f7fb')
+        }
+      } catch (error) {}
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
