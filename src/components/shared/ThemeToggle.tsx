@@ -3,8 +3,9 @@ import { AnimatePresence, motion } from 'motion/react'
 import { Moon, Sun } from 'lucide-react'
 import { applyTheme, currentTheme, type Theme } from '@/lib/theme'
 import { useMotionConfig } from '@/lib/motion'
+import { cn } from '@/lib/utils'
 
-export function ThemeToggle() {
+export function ThemeToggle({ className }: { className?: string }) {
   const [theme, setTheme] = useState<Theme>(currentTheme)
   const { reduce } = useMotionConfig()
   const next: Theme = theme === 'dark' ? 'light' : 'dark'
@@ -19,7 +20,10 @@ export function ThemeToggle() {
       }}
       aria-label={label}
       title={label}
-      className="theme-float glass-panel fixed top-[5.25rem] right-3 z-20 grid size-10 place-items-center overflow-hidden rounded-full border border-line text-accent shadow-soft transition-[color,border-color,box-shadow] duration-200 hover:border-brand-mid/60 hover:text-strong hover:shadow-glow sm:right-5"
+      className={cn(
+        'grid size-10 shrink-0 place-items-center overflow-hidden rounded-xl border border-line bg-surface text-ink-soft transition-colors duration-200 hover:border-brand-mid/50 hover:bg-raised hover:text-accent',
+        className,
+      )}
     >
       <AnimatePresence mode="wait" initial={false}>
         <motion.span

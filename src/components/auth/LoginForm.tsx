@@ -9,7 +9,7 @@ import { returnPath } from '@/config/paths'
 import { useAuth } from '@/hooks/useAuth'
 import { EMAIL_PATTERN } from '@/lib/validation'
 import { ApiRequestError } from '@/services/errors'
-import { authService } from '@/services/auth.service'
+import { authService, SESSION_REJECTED } from '@/services/auth.service'
 
 function isUnverifiedLogin(error: ApiRequestError | null) {
   if (!error) return false
@@ -75,11 +75,13 @@ export function LoginForm({
     } catch (error) {
       const requestError = error instanceof ApiRequestError ? error : null
       if (requestError?.fieldErrors) setErrors((current) => ({ ...current, ...requestError.fieldErrors }))
-      if (isUnverifiedLogin(requestError)) {
+      if (requestError?.code === SESSION_REJECTED) {
+        setFormError(requestError.message)
+      } else if (isUnverifiedLogin(requestError)) {
         setNeedsVerification(true)
         setFormError(requestError?.message || 'Please verify your email before logging in.')
       } else if (requestError?.status === 401) {
-        setFormError('Those details did not match our records. Please try again.')
+        setFormError(requestError.message || 'Invalid email or password.')
       } else {
         setFormError(requestError?.message ?? 'Unable to sign in. Please try again.')
       }

@@ -10,9 +10,23 @@ export const DUPLICATE_EMAIL_MESSAGE =
 
 const verifyInFlight = new Map<string, Promise<undefined>>()
 
+export const SESSION_REJECTED = 'session_rejected'
+
+/** The API (PHP) can send numeric columns as strings; the UI compares them as numbers. */
+function normalizePanelist(user: Panelist): Panelist {
+  const toNumber = (value: unknown) => (value === null || value === undefined || value === '' ? 0 : Number(value))
+  return {
+    ...user,
+    id: toNumber(user.id),
+    is_verified: toNumber(user.is_verified),
+    balance_point: toNumber(user.balance_point),
+    onboarding_step: toNumber(user.onboarding_step),
+  }
+}
+
 function requireUser(data: Panelist | { user: Panelist } | undefined): Panelist {
-  if (data && typeof data === 'object' && 'user' in data && data.user?.email) return data.user
-  if (data && typeof data === 'object' && 'email' in data && data.email) return data
+  if (data && typeof data === 'object' && 'user' in data && data.user?.email) return normalizePanelist(data.user)
+  if (data && typeof data === 'object' && 'email' in data && data.email) return normalizePanelist(data)
   throw new ApiRequestError({ message: 'Unable to load your profile.' })
 }
 
@@ -22,22 +36,46 @@ function isUnverifiedPanelist(user: Panelist) {
 }
 
 function requireSession(data: AuthSuccessData | undefined, fallback: string): AuthSession {
-  if (!data?.token || !data.user) {
+  const token = typeof data?.token === 'string' ? data.token.trim() : ''
+  if (!token || !data?.user) {
     throw new ApiRequestError({ message: fallback })
   }
-  if (isUnverifiedPanelist(data.user)) {
+  const user = normalizePanelist(data.user)
+  if (isUnverifiedPanelist(user)) {
     throw new ApiRequestError({ message: 'Please verify your email before logging in.' }, 403)
   }
-  return { token: data.token, user: data.user }
+  return { token, user }
 }
 
 export const authService = {
-  login(payload: Pick<LoginPayload, 'email' | 'password'>) {
-    return apiRequest<AuthSuccessData>('/auth/login', {
+  async login(payload: Pick<LoginPayload, 'email' | 'password'>) {
+    const data = await apiRequest<AuthSuccessData>('/auth/login', {
       method: 'POST',
       body: { email: payload.email, password: payload.password },
       auth: false,
-    }).then((data) => requireSession(data, 'Login did not return a session.'))
+      fallbackMessage: 'Invalid email or password.',
+    })
+    const session = requireSession(data, 'Login did not return a session.')
+    // Confirm the server accepts the new token before saving it. Without this, a token the API rejects
+    // (for example when the Authorization header does not reach it) signs the user in and straight back out.
+    try {
+      const user = await apiRequest<Panelist | { user: Panelist }>('/me', {
+        token: session.token,
+        keepSessionOn401: true,
+      }).then(requireUser)
+      return { token: session.token, user }
+    } catch (error) {
+      if (error instanceof ApiRequestError && error.status === 401) {
+        throw new ApiRequestError(
+          {
+            message: `Your details were accepted, but the server did not accept the sign-in session. Please try again, or contact ${brand.email} if this keeps happening.`,
+            code: SESSION_REJECTED,
+          },
+          401,
+        )
+      }
+      return session
+    }
   },
   register(payload: { name: string; email: string; password: string; phone?: string }) {
     const body: Record<string, string> = {

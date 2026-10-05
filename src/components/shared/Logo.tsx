@@ -1,65 +1,39 @@
-import { useId } from 'react'
 import { Link } from 'react-router-dom'
+import logoUrl from '@/assets/brand/intensity-research-logo.png'
+import logoReversedUrl from '@/assets/brand/intensity-research-logo-reversed.png'
 import { brand } from '@/config/brand'
 import { cn } from '@/lib/utils'
 
-export function LogoMark({ className, title }: { className?: string; title?: string }) {
-  const gradientId = useId()
-  return (
-    <svg
-      viewBox="0 0 40 40"
-      className={cn('size-9 shrink-0', className)}
-      role={title ? 'img' : undefined}
-      aria-hidden={title ? undefined : true}
-      aria-label={title}
-    >
-      <defs>
-        <linearGradient id={gradientId} x1="4" y1="2" x2="38" y2="40" gradientUnits="userSpaceOnUse">
-          <stop offset="0" stopColor="#3A66FF" />
-          <stop offset="1" stopColor="#22C7E6" />
-        </linearGradient>
-      </defs>
-      <rect width="40" height="40" rx="11" fill={`url(#${gradientId})`} />
-      <rect x="0.5" y="0.5" width="39" height="39" rx="10.5" fill="none" stroke="#FFFFFF" strokeOpacity="0.18" />
-      <circle cx="12" cy="12.6" r="2.7" fill="#FFFFFF" />
-      <rect x="9.4" y="17.5" width="5.2" height="13" rx="2.6" fill="#FFFFFF" />
-      <rect x="17.4" y="13.5" width="5.2" height="17" rx="2.6" fill="#FFFFFF" fillOpacity="0.92" />
-      <rect x="25.4" y="8.5" width="5.2" height="22" rx="2.6" fill="#FFFFFF" fillOpacity="0.84" />
-    </svg>
-  )
-}
-
 interface LogoProps {
   to?: string
-  /** `light` forces dark text for use on a light background regardless of the active theme. */
-  tone?: 'theme' | 'light'
   size?: 'sm' | 'md' | 'lg'
   className?: string
 }
 
-const sizes = {
-  sm: { mark: 'size-8', name: 'text-[15px]', tag: 'text-[8.5px] tracking-[0.34em]' },
-  md: { mark: 'size-9 sm:size-10', name: 'text-base sm:text-[17px]', tag: 'text-[9px] tracking-[0.36em]' },
-  lg: { mark: 'size-12', name: 'text-xl', tag: 'text-[10px] tracking-[0.38em]' },
+const heights = {
+  sm: 'h-9',
+  md: 'h-10 sm:h-11',
+  lg: 'h-14',
 } as const
 
-export function Logo({ to = '/', tone = 'theme', size = 'md', className }: LogoProps) {
-  const s = sizes[size]
+/** Shows the reversed artwork inside any `[data-theme='dark']` region and the full-colour artwork elsewhere. */
+export function Logo({ to = '/', size = 'md', className }: LogoProps) {
+  const imageClass = cn('w-auto select-none', heights[size])
   return (
     <Link
       to={to}
-      className={cn('group inline-flex shrink-0 items-center gap-2.5 rounded-xl', className)}
+      className={cn('inline-flex shrink-0 items-center rounded-xl', className)}
       aria-label={`${brand.name} home`}
     >
-      <LogoMark className={cn(s.mark, 'transition-transform duration-300 motion-safe:group-hover:scale-105')} />
-      <span className="flex flex-col leading-none" aria-hidden="true">
-        <span className={cn('font-display font-semibold', s.name, tone === 'light' ? 'text-[#0b1324]' : 'text-strong')}>
-          Intensity
-        </span>
-        <span className={cn('mt-1 font-semibold uppercase', s.tag, tone === 'light' ? 'text-[#2c55e8]' : 'text-accent')}>
-          Research
-        </span>
-      </span>
+      <img src={logoUrl} alt="" width={720} height={210} draggable={false} className={cn('logo-on-light', imageClass)} />
+      <img
+        src={logoReversedUrl}
+        alt=""
+        width={720}
+        height={210}
+        draggable={false}
+        className={cn('logo-on-dark', imageClass)}
+      />
     </Link>
   )
 }

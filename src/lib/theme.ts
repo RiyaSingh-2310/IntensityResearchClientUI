@@ -4,12 +4,12 @@ export type Theme = 'dark' | 'light'
 export const THEME_STORAGE_KEY = 'ir.theme'
 
 const themeColors: Record<Theme, string> = {
-  dark: '#060a14',
-  light: '#f5f7fb',
+  dark: '#07122a',
+  light: '#f7f9fc',
 }
 
 export function currentTheme(): Theme {
-  return document.documentElement.dataset.theme === 'light' ? 'light' : 'dark'
+  return document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light'
 }
 
 export function applyTheme(theme: Theme) {

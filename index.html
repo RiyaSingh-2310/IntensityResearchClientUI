@@ -2,10 +2,11 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="64x64" href="/favicon.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#060a14" />
-    <meta name="color-scheme" content="dark light" />
+    <meta name="theme-color" content="#f7f9fc" />
+    <meta name="color-scheme" content="light dark" />
     <meta
       name="description"
       content="Intensity Research is a market research participant panel. Share your perspective in research studies, earn points, and redeem them for rewards."
@@ -26,9 +27,9 @@
     <title>Intensity Research — Participant Portal</title>
     <script>
       try {
-        if (localStorage.getItem('ir.theme') === 'light') {
-          document.documentElement.dataset.theme = 'light'
-          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#f5f7fb')
+        if (localStorage.getItem('ir.theme') === 'dark') {
+          document.documentElement.dataset.theme = 'dark'
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#07122a')
         }
       } catch (error) {}
     </script>

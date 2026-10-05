@@ -39,7 +39,7 @@ export function PublicFooter() {
   ]
 
   return (
-    <footer className="border-t border-line bg-night text-ink">
+    <footer data-theme="dark" className="border-t border-line bg-surface text-ink">
       <div className="mx-auto grid max-w-7xl gap-12 px-4 py-14 sm:px-6 lg:grid-cols-[1.4fr_repeat(3,1fr)] lg:px-8 lg:py-16">
         <div>
           <Logo to={paths.home} />

@@ -2,7 +2,6 @@ import { BrowserRouter, Navigate, Route, Routes, useLocation, useParams } from '
 import { GuestRoute, ProtectedRoute } from '@/components/auth/RouteGuards'
 import { PublicLayout } from '@/components/layout/PublicLayout'
 import { ScrollToTop } from '@/components/shared/ScrollToTop'
-import { ThemeToggle } from '@/components/shared/ThemeToggle'
 import { legacyPanelistRedirects, paths } from '@/config/paths'
 import { AuthProvider } from '@/context/AuthContext'
 import { JoinPage } from '@/pages/auth/JoinPage'
@@ -44,7 +43,6 @@ export default function App() {
     <AuthProvider>
       <BrowserRouter>
         <ScrollToTop />
-        <ThemeToggle />
         <Routes>
           <Route element={<PublicLayout />}>
             <Route path={paths.home} element={<HomePage />} />

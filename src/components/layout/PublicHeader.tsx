@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { NavItem } from '@/components/layout/NavItem'
 import { ProfileMenu } from '@/components/layout/ProfileMenu'
 import { Logo } from '@/components/shared/Logo'
+import { ThemeToggle } from '@/components/shared/ThemeToggle'
 import { Button } from '@/components/ui/button'
 import { memberNav, publicNav } from '@/config/brand'
 import { paths } from '@/config/paths'
@@ -103,7 +104,7 @@ export function PublicHeader() {
 
   return (
     <>
-      <header className="sticky top-0 z-40 border-b border-line/80 bg-paper/80 backdrop-blur-xl supports-[backdrop-filter]:bg-paper/65">
+      <header className="sticky top-0 z-40 border-b border-line/80 bg-surface/95 backdrop-blur-xl supports-[backdrop-filter]:bg-surface/88">
         <div className="mx-auto flex h-18 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
           <Logo />
           <nav className="hidden items-center gap-0.5 lg:flex" aria-label="Primary">
@@ -114,6 +115,7 @@ export function PublicHeader() {
             ))}
           </nav>
           <div className="flex items-center gap-2">
+            <ThemeToggle />
             {ready && user ? <ProfileMenu open={profileOpen} onOpenChange={setProfile} onNavigate={closeMobile} /> : null}
             {ready && !user ? (
               <div className="hidden items-center gap-2 lg:flex">
@@ -177,7 +179,7 @@ export function PublicHeader() {
           type="button"
           aria-label="Close menu"
           tabIndex={-1}
-          className="fixed inset-0 z-30 cursor-default border-0 bg-[#03060d]/60 backdrop-blur-md lg:hidden"
+          className="fixed inset-0 z-30 cursor-default border-0 bg-[#0a1a36]/40 backdrop-blur-md lg:hidden"
           onClick={closeMobile}
         />
       ) : null}

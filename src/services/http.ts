@@ -13,6 +13,10 @@ interface RequestOptions {
   withMessage?: boolean
   /** Leave the session alone on 401; the caller decides whether the token is really invalid. */
   keepSessionOn401?: boolean
+  /** Send this Bearer token instead of the stored one (e.g. to check a token before it is saved). */
+  token?: string
+  /** Used when an error response carries no message, in place of the generic per-status text. */
+  fallbackMessage?: string
 }
 
 function parseFieldErrors(errors: unknown): Record<string, string> | undefined {
@@ -23,6 +27,25 @@ function parseFieldErrors(errors: unknown): Record<string, string> | undefined {
     else if (typeof value === 'string' && value) out[key] = value
   }
   return Object.keys(out).length ? out : undefined
+}
+
+/**
+ * Accepts JSON regardless of the declared content type, and tolerates PHP notices printed before the JSON body.
+ */
+function parseBody(text: string): unknown {
+  const trimmed = text.trim()
+  if (!trimmed) return null
+  try {
+    return JSON.parse(trimmed)
+  } catch {
+    const start = trimmed.search(/[{[]/)
+    if (start <= 0) return null
+    try {
+      return JSON.parse(trimmed.slice(start))
+    } catch {
+      return null
+    }
+  }
 }
 
 function statusMessage(status: number, fallback: string) {
@@ -36,12 +59,12 @@ function statusMessage(status: number, fallback: string) {
   return fallback || 'Something went wrong. Please try again.'
 }
 
-function toError(payload: unknown, status: number) {
+function toError(payload: unknown, status: number, fallbackMessage?: string) {
   const envelope = payload as ApiEnvelope | ApiError | null
   const message =
-    envelope && typeof envelope === 'object' && 'message' in envelope && typeof envelope.message === 'string'
-      ? envelope.message
-      : ''
+    (envelope && typeof envelope === 'object' && 'message' in envelope && typeof envelope.message === 'string'
+      ? envelope.message.trim()
+      : '') || fallbackMessage || ''
   const fieldErrors =
     envelope && typeof envelope === 'object' && 'errors' in envelope
       ? parseFieldErrors((envelope as ApiEnvelope).errors)
@@ -81,10 +104,8 @@ export async function apiRequest<T>(
   }
 
   const sendAuth = options.auth !== false
-  if (sendAuth) {
-    const token = readToken()
-    if (token) headers.Authorization = `Bearer ${token}`
-  }
+  const sentToken = sendAuth ? (options.token ?? readToken()) : null
+  if (sentToken) headers.Authorization = `Bearer ${sentToken}`
 
   let response: Response
   try {
@@ -108,22 +129,16 @@ export async function apiRequest<T>(
     return undefined as T
   }
 
-  let payload: unknown = null
-  const contentType = response.headers.get('content-type') ?? ''
-  if (contentType.includes('application/json')) {
-    try {
-      payload = await response.json()
-    } catch {
-      payload = null
-    }
-  }
+  const payload = parseBody(await response.text().catch(() => ''))
 
   if (!response.ok) {
-    if (response.status === 401 && sendAuth && !options.keepSessionOn401 && readToken()) {
+    // Only end the session if the rejected token is still the stored one; a request that started before
+    // a fresh sign-in must not log the new session out.
+    if (response.status === 401 && sentToken && !options.keepSessionOn401 && readToken() === sentToken) {
       clearToken()
       window.dispatchEvent(new Event(UNAUTHORIZED_EVENT))
     }
-    throw toError(payload, response.status)
+    throw toError(payload, response.status, options.fallbackMessage)
   }
 
   const envelope = payload as ApiEnvelope<T> | null
@@ -133,7 +148,7 @@ export async function apiRequest<T>(
       : ''
   if (envelope && typeof envelope === 'object' && 'success' in envelope) {
     if (!envelope.success) {
-      throw toError(envelope, response.status)
+      throw toError(envelope, response.status, options.fallbackMessage)
     }
     if (options.withMessage) return { data: envelope.data as T, message }
     return envelope.data as T

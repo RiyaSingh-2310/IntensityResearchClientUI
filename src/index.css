@@ -4,37 +4,39 @@
   --font-display: "Sora", "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
 
-  --color-strong: #ffffff;
-  --color-ink: #e8eef8;
-  --color-ink-soft: #b1bdd2;
-  --color-muted: #8392ab;
-  --color-night: #03060d;
-  --color-paper: #060a14;
-  --color-cream: #0a101e;
-  --color-surface: #0e1627;
-  --color-raised: #142036;
-  --color-line: #1f2b42;
-  --color-brand: #3a66ff;
-  --color-brand-deep: #2c55e8;
-  --color-brand-mid: #5a82ff;
-  --color-brand-soft: #111e44;
-  --color-accent: #82adff;
-  --color-signal: #2dd4e8;
-  --color-signal-deep: #19b6cc;
-  --color-signal-soft: #08262e;
-  --color-danger: #f87171;
-  --color-danger-soft: #2b1116;
-  --color-success: #34d399;
-  --color-success-soft: #0a2a20;
-  --color-warning: #fbbf24;
-  --color-warning-soft: #2a2109;
-  --color-info: #60a5fa;
-  --color-info-soft: #0d1e3b;
+  --color-strong: #0b1f44;
+  --color-ink: #16243f;
+  --color-ink-soft: #475569;
+  --color-muted: #64748b;
+  --color-night: #eaf0f7;
+  --color-paper: #f7f9fc;
+  --color-cream: #f1f5fa;
+  --color-surface: #ffffff;
+  --color-raised: #eef3f9;
+  --color-line: #e2e8f0;
+  --color-brand: #1f5fd6;
+  --color-brand-deep: #174bb0;
+  --color-brand-mid: #2f6fe4;
+  --color-brand-soft: #e8f0fe;
+  --color-accent: #1d5bcc;
+  --color-on-signal: #ffffff;
+  --color-signal: #0b8793;
+  --color-signal-deep: #08707a;
+  --color-signal-soft: #e3f5f6;
+  --color-danger: #dc2626;
+  --color-danger-soft: #fdeeee;
+  --color-success: #047857;
+  --color-success-soft: #e6f6ef;
+  --color-warning: #b45309;
+  --color-warning-soft: #fdf3e1;
+  --color-info: #2563eb;
+  --color-info-soft: #e8f0fe;
 
-  --shadow-card: 0 1px 0 rgb(255 255 255 / 0.03) inset, 0 12px 32px rgb(0 0 0 / 0.35);
-  --shadow-lift: 0 24px 60px rgb(0 0 0 / 0.55);
-  --shadow-soft: 0 8px 24px rgb(0 0 0 / 0.3);
-  --shadow-glow: 0 0 0 1px rgb(90 130 255 / 0.35), 0 10px 30px rgb(58 102 255 / 0.28);
+  /* Tailwind inlines shadow values, so they point at runtime variables that each theme sets. */
+  --shadow-card: var(--sh-card);
+  --shadow-lift: var(--sh-lift);
+  --shadow-soft: var(--sh-soft);
+  --shadow-glow: var(--sh-glow);
   --spacing-18: 4.5rem;
   --animate-accordion-down: accordion-down 0.28s ease-out;
   --animate-accordion-up: accordion-up 0.2s ease-out;
@@ -62,50 +64,77 @@
   }
 }
 
-/* Light theme: same token names, so every utility class follows the active theme. */
+/*
+ * Light (off-white, blue, grey) is the default. The dark palette is scoped to [data-theme='dark'] rather than
+ * :root so a region such as the footer can opt into it while the rest of the page stays light.
+ */
 :root {
-  --grid-line: rgb(255 255 255 / 0.025);
-  --hero-top: #070c18;
-  --glass: rgb(14 22 39 / 0.72);
+  color-scheme: light;
+  --grid-line: rgb(15 35 75 / 0.028);
+  --hero-top: #eaf2fe;
+  --hero-glow: rgb(31 95 214 / 0.1);
+  --hero-glow-2: rgb(11 135 147 / 0.07);
+  --tint: rgb(31 95 214 / 0.07);
+  --glass: rgb(255 255 255 / 0.82);
+  --sh-card: 0 1px 2px rgb(15 35 75 / 0.04), 0 6px 20px rgb(15 35 75 / 0.05);
+  --sh-lift: 0 24px 50px rgb(15 35 75 / 0.1);
+  --sh-soft: 0 6px 16px rgb(15 35 75 / 0.06);
+  --sh-glow: 0 8px 22px rgb(31 95 214 / 0.2);
 }
 
-:root[data-theme='light'] {
-  color-scheme: light;
-  --grid-line: rgb(15 23 42 / 0.045);
-  --hero-top: #e9efff;
-  --glass: rgb(255 255 255 / 0.78);
+[data-theme='dark'] {
+  color-scheme: dark;
+  --grid-line: rgb(255 255 255 / 0.03);
+  --hero-top: #0a1a38;
+  --hero-glow: rgb(58 120 234 / 0.16);
+  --hero-glow-2: rgb(44 196 207 / 0.08);
+  --tint: rgb(58 120 234 / 0.14);
+  --glass: rgb(14 30 60 / 0.72);
 
-  --color-strong: #0b1324;
-  --color-ink: #0b1324;
-  --color-ink-soft: #3d4a63;
-  --color-muted: #5f6c85;
-  --color-night: #e6ebf4;
-  --color-paper: #f5f7fb;
-  --color-cream: #eef2f8;
-  --color-surface: #ffffff;
-  --color-raised: #eef2f9;
-  --color-line: #d9e0ec;
-  --color-brand: #3a66ff;
-  --color-brand-deep: #2347d6;
-  --color-brand-mid: #2c55e8;
-  --color-brand-soft: #e8eeff;
-  --color-accent: #2c55e8;
-  --color-signal: #0e7f93;
-  --color-signal-deep: #0b6c7d;
-  --color-signal-soft: #e2f6f9;
-  --color-danger: #dc2626;
-  --color-danger-soft: #fdecec;
-  --color-success: #047857;
-  --color-success-soft: #e5f6ef;
-  --color-warning: #b45309;
-  --color-warning-soft: #fdf3e1;
-  --color-info: #2563eb;
-  --color-info-soft: #e8f0fe;
+  --color-strong: #ffffff;
+  --color-ink: #e7eefa;
+  --color-ink-soft: #b3c1d9;
+  --color-muted: #8597b5;
+  --color-night: #050d1d;
+  --color-paper: #07122a;
+  --color-cream: #0b1832;
+  --color-surface: #0e1e3c;
+  --color-raised: #142a4e;
+  --color-line: #1e3559;
+  --color-brand: #3a78ea;
+  --color-brand-deep: #2b63cf;
+  --color-brand-mid: #5a91f2;
+  --color-brand-soft: #11264d;
+  --color-accent: #8db8ff;
+  --color-on-signal: #04131c;
+  --color-signal: #2cc4cf;
+  --color-signal-deep: #1aa7b2;
+  --color-signal-soft: #082a33;
+  --color-danger: #f87171;
+  --color-danger-soft: #2d1219;
+  --color-success: #34d399;
+  --color-success-soft: #0a2a22;
+  --color-warning: #fbbf24;
+  --color-warning-soft: #2a2209;
+  --color-info: #60a5fa;
+  --color-info-soft: #0e2142;
 
-  --shadow-card: 0 1px 2px rgb(15 23 42 / 0.05), 0 8px 24px rgb(15 23 42 / 0.06);
-  --shadow-lift: 0 20px 50px rgb(15 23 42 / 0.12);
-  --shadow-soft: 0 6px 18px rgb(15 23 42 / 0.08);
-  --shadow-glow: 0 0 0 1px rgb(58 102 255 / 0.25), 0 10px 26px rgb(58 102 255 / 0.2);
+  --sh-card: 0 1px 0 rgb(255 255 255 / 0.03) inset, 0 12px 32px rgb(0 0 0 / 0.3);
+  --sh-lift: 0 24px 60px rgb(0 0 0 / 0.45);
+  --sh-soft: 0 8px 24px rgb(0 0 0 / 0.25);
+  --sh-glow: 0 10px 28px rgb(58 120 234 / 0.3);
+}
+
+.logo-on-dark {
+  display: none;
+}
+
+[data-theme='dark'] .logo-on-light {
+  display: none;
+}
+
+[data-theme='dark'] .logo-on-dark {
+  display: block;
 }
 
 /* Applied briefly while switching themes so colors cross-fade instead of snapping. */
@@ -121,7 +150,6 @@
 }
 
 html {
-  color-scheme: dark;
   scroll-behavior: smooth;
   scrollbar-gutter: stable;
   background: var(--color-paper);
@@ -148,8 +176,8 @@ body {
 }
 
 ::selection {
-  background: rgb(58 102 255 / 0.45);
-  color: #ffffff;
+  background: color-mix(in srgb, var(--color-brand) 28%, transparent);
+  color: var(--color-strong);
 }
 
 :focus-visible {
@@ -170,8 +198,8 @@ body {
 
 .hero-grid {
   background-image:
-    radial-gradient(circle at 15% 15%, rgb(58 102 255 / 0.18), transparent 32%),
-    radial-gradient(circle at 88% 10%, rgb(45 212 232 / 0.1), transparent 28%),
+    radial-gradient(circle at 15% 15%, var(--hero-glow), transparent 34%),
+    radial-gradient(circle at 88% 10%, var(--hero-glow-2), transparent 30%),
     linear-gradient(var(--grid-line) 1px, transparent 1px),
     linear-gradient(90deg, var(--grid-line) 1px, transparent 1px),
     linear-gradient(180deg, var(--hero-top) 0%, var(--color-paper) 100%);
@@ -185,7 +213,7 @@ body {
 
 .surface-gradient {
   background-image:
-    linear-gradient(160deg, rgb(58 102 255 / 0.16) 0%, rgb(14 22 39 / 0) 45%),
+    linear-gradient(160deg, var(--tint) 0%, transparent 45%),
     linear-gradient(180deg, var(--color-surface), var(--color-cream));
 }
 
@@ -202,7 +230,7 @@ body {
 .themed-scrollbar,
 .themed-scrollbar[data-radix-select-viewport] {
   scrollbar-width: thin;
-  scrollbar-color: rgb(90 130 255 / 0.55) var(--color-cream);
+  scrollbar-color: color-mix(in srgb, var(--color-brand-mid) 55%, transparent) var(--color-cream);
   -ms-overflow-style: auto;
 }
 
@@ -222,7 +250,7 @@ body {
 .themed-scrollbar::-webkit-scrollbar-thumb {
   border: 2px solid var(--color-cream);
   border-radius: 9999px;
-  background: rgb(90 130 255 / 0.55);
+  background: color-mix(in srgb, var(--color-brand-mid) 55%, transparent);
 }
 
 .themed-scrollbar::-webkit-scrollbar-thumb:hover {
@@ -300,25 +328,6 @@ select:autofill {
   will-change: transform;
 }
 
-@keyframes theme-float {
-  0%,
-  100% {
-    transform: translate3d(0, 0, 0);
-  }
-  50% {
-    transform: translate3d(0, -5px, 0);
-  }
-}
-
-.theme-float {
-  animation: theme-float 3.2s ease-in-out infinite;
-}
-
-.theme-float:hover,
-.theme-float:focus-visible {
-  animation-play-state: paused;
-}
-
 @keyframes pulse-ring {
   0% {
     box-shadow: 0 0 0 0 rgb(45 212 232 / 0.45);
@@ -340,7 +349,6 @@ select:autofill {
   .float-soft,
   .float-soft-late,
   .float-soft-slow,
-  .theme-float,
   .pulse-ring {
     animation: none;
   }

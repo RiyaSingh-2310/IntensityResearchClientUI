@@ -9,7 +9,7 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default: 'bg-brand text-white shadow-glow hover:bg-brand-mid active:bg-brand-deep',
-        signal: 'bg-signal text-[#03060d] hover:bg-[#5ae0f0] active:bg-signal-deep',
+        signal: 'bg-signal text-on-signal hover:bg-signal-deep active:bg-signal-deep',
         outline: 'border border-line bg-surface/60 text-ink hover:border-brand-mid/60 hover:bg-raised',
         ghost: 'text-ink-soft hover:bg-raised hover:text-ink',
         subtle: 'border border-line bg-raised text-ink-soft hover:text-ink',
