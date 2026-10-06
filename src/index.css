@@ -7,8 +7,8 @@
   --color-ink: #1e2320;
   --color-ink-soft: #464d48;
   --color-muted: #686f69;
-  --color-paper: #f5f3ed;
-  --color-cream: #faf9f5;
+  --color-paper: #ffffff;
+  --color-cream: #ffffff;
   --color-brand: #2b322e;
   --color-brand-deep: #1a1f1c;
   --color-brand-mid: #4a534d;
@@ -102,7 +102,7 @@ body {
   -webkit-backdrop-filter: blur(18px);
 }
 
-/* Hero bands stay a flat ivory: no gradients, glows, grids, or patterns. */
+/* Hero bands stay a flat white: no gradients, glows, grids, or patterns. */
 .hero-grid {
   background-color: var(--color-paper);
 }
