@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'motion/react'
-import { ChevronDown, ClipboardList, KeyRound, LogOut, Settings } from 'lucide-react'
+import { ChevronDown, ClipboardList, LogOut, Settings } from 'lucide-react'
 import { useEffect, useId, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { paths } from '@/config/paths'
