@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" fill="none">
+  <rect width="40" height="40" rx="10" fill="#547A31"/>
+  <path d="M10 26l5-10 5 10H10zm10 0l5-10 5 10H20z" fill="#fff"/>
+  <text x="20" y="33" text-anchor="middle" fill="#fff" font-family="Arial,sans-serif" font-size="7" font-weight="700">REI</text>
+</svg>

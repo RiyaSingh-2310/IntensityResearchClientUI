@@ -52,20 +52,20 @@ export function RegistrationSuccess({
   return (
     <div className="px-4 py-16 sm:px-6">
       <motion.div
-        className="mx-auto max-w-xl rounded-3xl border border-line bg-surface p-8 text-center shadow-card sm:p-10"
+        className="mx-auto max-w-xl rounded-3xl border border-line bg-white p-8 text-center shadow-card sm:p-10"
         initial={{ opacity: 0, scale: 0.98 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration }}
       >
         <motion.div
-          className={`mx-auto grid size-14 place-items-center rounded-full ${delivered ? 'bg-brand-soft text-accent' : 'bg-danger-soft text-danger'}`}
+          className={`mx-auto grid size-14 place-items-center rounded-full ${delivered ? 'bg-brand-soft text-brand' : 'bg-danger-soft text-danger'}`}
           initial={{ scale: 0.7, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ duration, delay: 0.08 }}
         >
           <Mail className="size-7" />
         </motion.div>
-        <p className="mt-5 text-xs font-semibold tracking-[0.2em] text-accent uppercase">
+        <p className="mt-5 text-xs font-semibold tracking-[0.2em] text-brand uppercase">
           {delivered ? 'Almost there' : 'Account created'}
         </p>
         <h1 className="font-display mt-3 text-4xl text-ink">{heading}</h1>
@@ -92,7 +92,7 @@ export function RegistrationSuccess({
           </p>
         )}
         {resendMessage ? (
-          <p className={`mt-4 text-sm ${resendState === 'error' ? 'text-danger' : 'text-accent'}`} role="status">
+          <p className={`mt-4 text-sm ${resendState === 'error' ? 'text-danger' : 'text-brand-deep'}`} role="status">
             {resendMessage}
           </p>
         ) : null}
@@ -103,11 +103,11 @@ export function RegistrationSuccess({
             </Button>
           ) : null}
           <Button asChild>
-            <Link to={paths.login}>Go to login</Link>
+            <Link to={paths.login}>Go to Login</Link>
           </Button>
         </div>
         <p className="mt-6 text-sm text-muted">
-          <Link to={paths.home} className="font-medium text-accent hover:underline">
+          <Link to={paths.home} className="font-medium text-brand hover:underline">
             Back to Home
           </Link>
         </p>

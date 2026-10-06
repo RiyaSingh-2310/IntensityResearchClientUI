@@ -21,15 +21,15 @@ export function SectionHeading({
   return (
     <div className={cn(align === 'center' ? 'mx-auto max-w-2xl text-center' : 'max-w-2xl', className)}>
       {eyebrow ? (
-        <p className={cn('mb-3 text-xs font-semibold tracking-[0.22em] uppercase', light ? 'text-signal' : 'text-accent')}>
+        <p className={cn('mb-3 text-xs font-semibold tracking-[0.22em] uppercase', light ? 'text-accent' : 'text-brand')}>
           {eyebrow}
         </p>
       ) : null}
-      <h2 className="font-display text-3xl leading-tight font-semibold text-strong text-balance sm:text-4xl">
+      <h2 className={cn('font-display text-3xl leading-tight text-balance sm:text-4xl', light ? 'text-cream' : 'text-ink')}>
         {title}
       </h2>
       {description ? (
-        <p className="mt-4 text-base leading-7 text-ink-soft">{description}</p>
+        <p className={cn('mt-4 text-base leading-7', light ? 'text-cream/75' : 'text-ink-soft')}>{description}</p>
       ) : null}
     </div>
   )

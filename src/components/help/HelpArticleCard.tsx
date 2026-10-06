@@ -16,6 +16,8 @@ import {
   Wrench,
   Zap,
 } from 'lucide-react'
+import { cardLiftClass } from '@/lib/motion'
+import { cn } from '@/lib/utils'
 
 const articleIcons = {
   user: UserPlus,
@@ -50,9 +52,14 @@ export function HelpArticleCard({
   const Icon = articleIcons[icon]
 
   return (
-    <article className="flex items-start gap-3 rounded-xl border border-line/60 bg-cream px-3 py-3">
-      <span className="mt-0.5 grid size-9 shrink-0 place-items-center rounded-xl bg-raised text-accent">
-        <Icon className="size-4" aria-hidden="true" />
+    <article
+      className={cn(
+        'group flex cursor-default items-start gap-3 rounded-2xl border border-transparent bg-white/70 px-3 py-3',
+        cardLiftClass,
+      )}
+    >
+      <span className="mt-0.5 grid size-9 shrink-0 place-items-center rounded-xl bg-brand-soft text-brand transition-transform duration-200 motion-safe:group-hover:-translate-y-0.5">
+        <Icon className="size-4" />
       </span>
       <div>
         <h4 className="text-sm font-semibold text-ink">{title}</h4>

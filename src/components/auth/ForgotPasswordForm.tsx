@@ -6,6 +6,7 @@ import { Field } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { PasswordField } from '@/components/forms/PasswordField'
 import { PasswordStrength } from '@/components/shared/PasswordStrength'
+import { omitKey } from '@/lib/utils'
 import { EMAIL_PATTERN, validateNewPassword } from '@/lib/validation'
 import { ApiRequestError } from '@/services/errors'
 import { authService } from '@/services/auth.service'
@@ -112,7 +113,7 @@ export function ForgotPasswordForm({
           {sentMessage}
         </p>
         <Button className="mt-6 w-full" variant="outline" type="button" onClick={onBack}>
-          Back to login
+          Back to Login
         </Button>
       </div>
     )
@@ -143,7 +144,10 @@ export function ForgotPasswordForm({
             id="reset-password"
             autoComplete="new-password"
             value={password}
-            onChange={(event) => setPassword(event.target.value)}
+            onChange={(event) => {
+              setPassword(event.target.value)
+              setFieldErrors((current) => omitKey(current, 'password'))
+            }}
           />
         </Field>
         <PasswordStrength password={password} />
@@ -152,14 +156,17 @@ export function ForgotPasswordForm({
             id="reset-confirm"
             autoComplete="new-password"
             value={confirmPassword}
-            onChange={(event) => setConfirmPassword(event.target.value)}
+            onChange={(event) => {
+              setConfirmPassword(event.target.value)
+              setFieldErrors((current) => omitKey(current, 'confirmPassword'))
+            }}
           />
         </Field>
         <Button type="submit" disabled={submitting}>
           {submitting ? 'Updating…' : 'Update password'}
         </Button>
-        <button type="button" className="text-sm text-accent hover:underline" onClick={onBack}>
-          Back to login
+        <button type="button" className="text-sm text-brand hover:underline" onClick={onBack}>
+          Back to Login
         </button>
       </form>
     )
@@ -172,7 +179,7 @@ export function ForgotPasswordForm({
           {error}
         </p>
       ) : null}
-      <Field label="Email address" htmlFor="forgot-email" required>
+      <Field label="Email Address" htmlFor="forgot-email" required>
         <Input
           id="forgot-email"
           type="email"
@@ -183,10 +190,10 @@ export function ForgotPasswordForm({
         />
       </Field>
       <Button type="submit" disabled={submitting}>
-        {submitting ? 'Sending…' : 'Send reset link'}
+        {submitting ? 'Sending…' : 'Send Reset Link'}
       </Button>
-      <button type="button" className="text-sm text-accent hover:underline" onClick={onBack}>
-        Back to login
+      <button type="button" className="text-sm text-brand hover:underline" onClick={onBack}>
+        Back to Login
       </button>
     </form>
   )

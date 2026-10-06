@@ -1,42 +1,35 @@
 @import "tailwindcss";
 
 @theme {
-  --font-display: "Sora", "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Fraunces", ui-serif, Georgia, "Times New Roman", serif;
+  --font-sans: "Outfit", ui-sans-serif, system-ui, sans-serif;
 
-  --color-strong: #0b1f44;
-  --color-ink: #16243f;
-  --color-ink-soft: #475569;
-  --color-muted: #64748b;
-  --color-night: #eaf0f7;
-  --color-paper: #f7f9fc;
-  --color-cream: #f1f5fa;
+  --color-ink: #1e2320;
+  --color-ink-soft: #464d48;
+  --color-muted: #686f69;
+  --color-paper: #f5f3ed;
+  --color-cream: #faf9f5;
+  --color-brand: #2b322e;
+  --color-brand-deep: #1a1f1c;
+  --color-brand-mid: #4a534d;
+  --color-brand-soft: #eceee8;
+  --color-accent: #95a878;
+  --color-accent-deep: #4e5d3f;
+  --color-accent-soft: #eaefe1;
+  --color-line: #e3e0d7;
   --color-surface: #ffffff;
-  --color-raised: #eef3f9;
-  --color-line: #e2e8f0;
-  --color-brand: #1f5fd6;
-  --color-brand-deep: #174bb0;
-  --color-brand-mid: #2f6fe4;
-  --color-brand-soft: #e8f0fe;
-  --color-accent: #1d5bcc;
-  --color-on-signal: #ffffff;
-  --color-signal: #0b8793;
-  --color-signal-deep: #08707a;
-  --color-signal-soft: #e3f5f6;
-  --color-danger: #dc2626;
-  --color-danger-soft: #fdeeee;
-  --color-success: #047857;
-  --color-success-soft: #e6f6ef;
-  --color-warning: #b45309;
-  --color-warning-soft: #fdf3e1;
-  --color-info: #2563eb;
-  --color-info-soft: #e8f0fe;
+  --color-danger: #b42318;
+  --color-danger-soft: #fdecea;
+  --color-success: #2f6b4a;
+  --color-success-soft: #e5f0e8;
+  --color-warning: #8a5a12;
+  --color-warning-soft: #f6ecd9;
+  --color-info: #3c5a63;
+  --color-info-soft: #e6eef0;
 
-  /* Tailwind inlines shadow values, so they point at runtime variables that each theme sets. */
-  --shadow-card: var(--sh-card);
-  --shadow-lift: var(--sh-lift);
-  --shadow-soft: var(--sh-soft);
-  --shadow-glow: var(--sh-glow);
+  --shadow-card: 0 1px 2px rgb(30 35 32 / 0.04), 0 14px 36px rgb(30 35 32 / 0.06);
+  --shadow-lift: 0 18px 44px rgb(30 35 32 / 0.12);
+  --shadow-soft: 0 8px 24px rgb(30 35 32 / 0.06);
   --spacing-18: 4.5rem;
   --animate-accordion-down: accordion-down 0.28s ease-out;
   --animate-accordion-up: accordion-up 0.2s ease-out;
@@ -62,91 +55,6 @@
     height: 0;
     opacity: 0.35;
   }
-}
-
-/*
- * Light (off-white, blue, grey) is the default. The dark palette is scoped to [data-theme='dark'] rather than
- * :root so a region such as the footer can opt into it while the rest of the page stays light.
- */
-:root {
-  color-scheme: light;
-  --grid-line: rgb(15 35 75 / 0.028);
-  --hero-top: #eaf2fe;
-  --hero-glow: rgb(31 95 214 / 0.1);
-  --hero-glow-2: rgb(11 135 147 / 0.07);
-  --tint: rgb(31 95 214 / 0.07);
-  --glass: rgb(255 255 255 / 0.82);
-  --sh-card: 0 1px 2px rgb(15 35 75 / 0.04), 0 6px 20px rgb(15 35 75 / 0.05);
-  --sh-lift: 0 24px 50px rgb(15 35 75 / 0.1);
-  --sh-soft: 0 6px 16px rgb(15 35 75 / 0.06);
-  --sh-glow: 0 8px 22px rgb(31 95 214 / 0.2);
-}
-
-[data-theme='dark'] {
-  color-scheme: dark;
-  --grid-line: rgb(255 255 255 / 0.03);
-  --hero-top: #0a1a38;
-  --hero-glow: rgb(58 120 234 / 0.16);
-  --hero-glow-2: rgb(44 196 207 / 0.08);
-  --tint: rgb(58 120 234 / 0.14);
-  --glass: rgb(14 30 60 / 0.72);
-
-  --color-strong: #ffffff;
-  --color-ink: #e7eefa;
-  --color-ink-soft: #b3c1d9;
-  --color-muted: #8597b5;
-  --color-night: #050d1d;
-  --color-paper: #07122a;
-  --color-cream: #0b1832;
-  --color-surface: #0e1e3c;
-  --color-raised: #142a4e;
-  --color-line: #1e3559;
-  --color-brand: #3a78ea;
-  --color-brand-deep: #2b63cf;
-  --color-brand-mid: #5a91f2;
-  --color-brand-soft: #11264d;
-  --color-accent: #8db8ff;
-  --color-on-signal: #04131c;
-  --color-signal: #2cc4cf;
-  --color-signal-deep: #1aa7b2;
-  --color-signal-soft: #082a33;
-  --color-danger: #f87171;
-  --color-danger-soft: #2d1219;
-  --color-success: #34d399;
-  --color-success-soft: #0a2a22;
-  --color-warning: #fbbf24;
-  --color-warning-soft: #2a2209;
-  --color-info: #60a5fa;
-  --color-info-soft: #0e2142;
-
-  --sh-card: 0 1px 0 rgb(255 255 255 / 0.03) inset, 0 12px 32px rgb(0 0 0 / 0.3);
-  --sh-lift: 0 24px 60px rgb(0 0 0 / 0.45);
-  --sh-soft: 0 8px 24px rgb(0 0 0 / 0.25);
-  --sh-glow: 0 10px 28px rgb(58 120 234 / 0.3);
-}
-
-.logo-on-dark {
-  display: none;
-}
-
-[data-theme='dark'] .logo-on-light {
-  display: none;
-}
-
-[data-theme='dark'] .logo-on-dark {
-  display: block;
-}
-
-/* Applied briefly while switching themes so colors cross-fade instead of snapping. */
-.theme-transition,
-.theme-transition *,
-.theme-transition *::before,
-.theme-transition *::after {
-  transition:
-    background-color 0.35s ease,
-    border-color 0.35s ease,
-    color 0.35s ease,
-    fill 0.35s ease !important;
 }
 
 html {
@@ -176,45 +84,27 @@ body {
 }
 
 ::selection {
-  background: color-mix(in srgb, var(--color-brand) 28%, transparent);
-  color: var(--color-strong);
+  background: #dfe6d3;
+  color: var(--color-ink);
 }
 
 :focus-visible {
-  outline: 2px solid var(--color-accent);
   outline-offset: 2px;
 }
 
 .font-display {
   font-family: var(--font-display);
-  letter-spacing: -0.02em;
 }
 
 .glass-panel {
-  background: var(--glass);
+  background: rgb(255 255 255 / 0.72);
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
 }
 
+/* Hero bands stay a flat ivory: no gradients, glows, grids, or patterns. */
 .hero-grid {
-  background-image:
-    radial-gradient(circle at 15% 15%, var(--hero-glow), transparent 34%),
-    radial-gradient(circle at 88% 10%, var(--hero-glow-2), transparent 30%),
-    linear-gradient(var(--grid-line) 1px, transparent 1px),
-    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px),
-    linear-gradient(180deg, var(--hero-top) 0%, var(--color-paper) 100%);
-  background-size:
-    auto,
-    auto,
-    48px 48px,
-    48px 48px,
-    auto;
-}
-
-.surface-gradient {
-  background-image:
-    linear-gradient(160deg, var(--tint) 0%, transparent 45%),
-    linear-gradient(180deg, var(--color-surface), var(--color-cream));
+  background-color: var(--color-paper);
 }
 
 .no-scrollbar::-webkit-scrollbar {
@@ -230,7 +120,7 @@ body {
 .themed-scrollbar,
 .themed-scrollbar[data-radix-select-viewport] {
   scrollbar-width: thin;
-  scrollbar-color: color-mix(in srgb, var(--color-brand-mid) 55%, transparent) var(--color-cream);
+  scrollbar-color: rgb(43 50 46 / 0.45) var(--color-cream);
   -ms-overflow-style: auto;
 }
 
@@ -250,28 +140,18 @@ body {
 .themed-scrollbar::-webkit-scrollbar-thumb {
   border: 2px solid var(--color-cream);
   border-radius: 9999px;
-  background: color-mix(in srgb, var(--color-brand-mid) 55%, transparent);
+  background: rgb(43 50 46 / 0.45);
 }
 
 .themed-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: var(--color-brand-mid);
+  background: var(--color-brand);
 }
 
 input,
 textarea,
 select {
-  background-color: var(--color-cream);
+  background-color: #ffffff;
   color: var(--color-ink);
-}
-
-select option {
-  background-color: var(--color-surface);
-  color: var(--color-ink);
-}
-
-input::placeholder,
-textarea::placeholder {
-  color: var(--color-muted);
 }
 
 input:-webkit-autofill,
@@ -289,16 +169,34 @@ select:-webkit-autofill:active {
   -webkit-text-fill-color: var(--color-ink);
   caret-color: var(--color-ink);
   border-radius: 0.75rem;
-  box-shadow: 0 0 0 1000px var(--color-cream) inset;
-  -webkit-box-shadow: 0 0 0 1000px var(--color-cream) inset;
+  box-shadow: 0 0 0 1000px #ffffff inset;
+  -webkit-box-shadow: 0 0 0 1000px #ffffff inset;
   transition: background-color 99999s ease-out 0s;
 }
 
 input:autofill,
 textarea:autofill,
 select:autofill {
-  background-color: var(--color-cream);
+  background-color: #ffffff;
   color: var(--color-ink);
+}
+
+@keyframes partners-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.partners-marquee {
+  animation: partners-marquee 42s linear infinite;
+  will-change: transform;
+}
+
+.partners-marquee:hover {
+  animation-play-state: paused;
 }
 
 @keyframes float-soft {
@@ -328,19 +226,6 @@ select:autofill {
   will-change: transform;
 }
 
-@keyframes pulse-ring {
-  0% {
-    box-shadow: 0 0 0 0 rgb(45 212 232 / 0.45);
-  }
-  100% {
-    box-shadow: 0 0 0 10px rgb(45 212 232 / 0);
-  }
-}
-
-.pulse-ring {
-  animation: pulse-ring 2.2s ease-out infinite;
-}
-
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
@@ -348,9 +233,15 @@ select:autofill {
 
   .float-soft,
   .float-soft-late,
-  .float-soft-slow,
-  .pulse-ring {
+  .float-soft-slow {
     animation: none;
+  }
+
+  .partners-marquee {
+    animation: none;
+    flex-wrap: wrap;
+    width: 100%;
+    justify-content: center;
   }
 
   .motion-safe\:hover\:-translate-y-px:hover,

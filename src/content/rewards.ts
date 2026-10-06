@@ -1,41 +1,64 @@
-export const rewardsHero = {
-  eyebrow: 'Rewards',
-  titleLead: 'Your opinions,',
-  titleAccent: 'rewarded',
-  description:
-    'Earn points for eligible completed studies, then redeem them through the payout methods currently enabled on the panel.',
-  pills: ['Free to join', 'Points for eligible studies', 'Every request reviewed'],
+import type { RewardCategory } from '@/types/common'
+
+export const categoryLabels: Record<RewardCategory, string> = {
+  cash: 'Instant Cash',
+  'gift-card': 'Gift Cards',
+  digital: 'Prepaid & Digital',
+  charity: 'Charity',
 }
 
-export const rewardSteps = [
+export const rewardsHero = {
+  eyebrow: 'Rewards Catalog',
+  titleLead: 'Redeem Your Points for',
+  titleAccent: 'Rewards You Choose',
+  description:
+    'Turn your survey points into cash, gift cards, and digital payouts through the options currently enabled on the Intensity Research panel.',
+  pills: ['Secure & Verified', 'Every Request Reviewed', 'Free to Join'],
+}
+
+export const rewardShowcase = [
   {
-    title: 'Earn points',
-    copy: 'Points are credited to your balance when a study you took part in is marked complete.',
+    id: 'cash',
+    title: 'Instant Cash',
+    description: 'PayPal payouts, available in most countries Tremendous serves.',
+    category: 'cash' as const,
+    ids: ['paypal'],
+    comingSoonSlots: 0,
   },
   {
-    title: 'Reach the minimum',
-    copy: 'Once your available balance reaches the minimum payout, you can submit a redemption request.',
+    id: 'gift-cards',
+    title: 'Gift Cards',
+    description: 'Prepaid Visa and popular gift cards from the Tremendous catalog that work in your country.',
+    category: 'gift-card' as const,
+    ids: ['virtual-visa', 'amazon'],
+    comingSoonSlots: 0,
   },
   {
-    title: 'Request a payout',
-    copy: 'Choose a payout method and the points to redeem. Our team reviews each request before it is paid.',
+    id: 'charity',
+    title: 'Charity',
+    description: 'Donate to meaningful causes.',
+    category: 'charity' as const,
+    ids: [],
+    comingSoonSlots: 0,
   },
 ] as const
 
+export const popularRewardIds = ['paypal', 'virtual-visa'] as const
+
 export const rewardBenefits = [
   {
-    title: 'Reviewed payouts',
+    title: 'Clear Status',
+    copy: 'Track every request as pending, approved, rejected, or completed in your reward history.',
+    icon: 'zap',
+  },
+  {
+    title: 'Secure Payouts',
     copy: 'Every redemption request is checked by our team before it is processed, which keeps payouts accurate and secure.',
     icon: 'shield',
   },
   {
-    title: 'Clear status',
-    copy: 'Track every request as pending, approved, rejected, or completed in your redemption history.',
-    icon: 'zap',
-  },
-  {
-    title: 'Methods from the panel',
-    copy: 'The payout methods shown here come directly from the panel’s current settings, so you only see options you can actually use.',
+    title: 'Rewards for Your Country',
+    copy: 'Options come from the Tremendous catalog and the panel’s payout settings, so you only see rewards that can be delivered where you live.',
     icon: 'globe',
   },
 ] as const
@@ -46,12 +69,16 @@ export const rewardsFaqs = [
     a: 'Points are credited when a study you participated in is marked complete. Studies that end early (terminated or quota full) are not eligible for points.',
   },
   {
-    q: 'What is the minimum redemption?',
+    q: 'How long do payouts take?',
+    a: 'Each request is reviewed before it is paid, so timing depends on the review. You can follow the status of every request in your reward history.',
+  },
+  {
+    q: 'What’s the minimum redemption amount?',
     a: 'You can request a payout once your available balance reaches the minimum payout shown on this page.',
   },
   {
-    q: 'How long does a payout take?',
-    a: 'Each request is reviewed before it is paid, so timing depends on the review. You can follow the status of every request in your redemption history.',
+    q: 'Why don’t I see every reward?',
+    a: 'Many gift cards only work in one country. We only list rewards Tremendous can deliver to the country you select, so a reward you see is one you can actually use.',
   },
   {
     q: 'Why are some of my points “held”?',
@@ -60,10 +87,10 @@ export const rewardsFaqs = [
 ]
 
 export const rewardsCta = {
-  titleLead: 'Start earning points with',
-  titleAccent: 'Intensity Research',
+  titleLead: 'Start Earning Points and',
+  titleAccent: 'Unlock These Rewards',
   description:
-    'Join the panel for free, complete studies that match your profile, and redeem your points when you reach the minimum payout.',
-  primary: 'Join for free',
-  secondary: 'How it works',
+    'Join the Intensity Research panel for free, complete studies that match your profile, and redeem your points when you reach the minimum payout.',
+  primary: 'Join for Free',
+  secondary: 'Learn More',
 }

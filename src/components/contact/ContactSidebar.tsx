@@ -1,4 +1,5 @@
-import { CheckCircle2, Gift, Monitor, UserRound } from 'lucide-react'
+import { CheckCircle2, Gift, Mail, Monitor, UserRound } from 'lucide-react'
+import { brand } from '@/config/brand'
 import { contactTips, quickHelpTopics } from '@/content/contact'
 
 const topicIcons = {
@@ -10,15 +11,26 @@ const topicIcons = {
 export function ContactSidebar() {
   return (
     <aside className="space-y-4">
-      <section className="rounded-2xl border border-line bg-surface p-6">
-        <h3 className="font-display text-lg font-semibold text-strong">What we can help with</h3>
+      <section className="rounded-[1.6rem] border border-line bg-white p-6 shadow-card">
+        <h3 className="flex items-center gap-2 font-display text-xl text-ink">
+          <Mail className="size-5 text-brand" />
+          Email Support
+        </h3>
+        <p className="mt-1 text-sm text-ink-soft">The panel team replies to every message by email</p>
+        <a href={`mailto:${brand.email}`} className="mt-5 inline-flex text-sm font-medium text-brand break-all hover:underline">
+          {brand.email}
+        </a>
+      </section>
+
+      <section className="rounded-[1.6rem] border border-line bg-white p-6 shadow-card">
+        <h3 className="font-display text-xl text-ink">Quick Help Topics</h3>
         <ul className="mt-5 space-y-4">
           {quickHelpTopics.map((item) => {
             const Icon = topicIcons[item.icon]
             return (
               <li key={item.title} className="flex gap-3">
-                <span className="grid size-9 shrink-0 place-items-center rounded-xl border border-brand-mid/30 bg-brand-soft text-accent">
-                  <Icon className="size-4" aria-hidden="true" />
+                <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-brand-soft text-brand">
+                  <Icon className="size-4" />
                 </span>
                 <div>
                   <p className="text-sm font-semibold text-ink">{item.title}</p>
@@ -30,12 +42,12 @@ export function ContactSidebar() {
         </ul>
       </section>
 
-      <section className="rounded-2xl border border-signal/25 bg-signal-soft/60 p-6">
-        <h3 className="font-display text-lg font-semibold text-strong">Before you send</h3>
+      <section className="rounded-[1.6rem] border border-success/20 bg-success-soft/60 p-6">
+        <h3 className="font-display text-xl text-ink">Before You Send</h3>
         <ul className="mt-4 space-y-2">
           {contactTips.map((item) => (
             <li key={item} className="flex items-start gap-2 text-sm text-ink-soft">
-              <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-signal" aria-hidden="true" />
+              <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-success" />
               {item}
             </li>
           ))}

@@ -32,7 +32,7 @@ export function PhoneInput({
     <div className="flex gap-2">
       <div
         className={cn(
-          'relative h-11 shrink-0 rounded-xl border border-line bg-surface transition-colors focus-within:border-brand focus-within:ring-4 focus-within:ring-brand/10',
+          'relative h-11 shrink-0 rounded-xl border border-line bg-white transition-colors focus-within:border-brand focus-within:ring-4 focus-within:ring-brand/10',
           invalid && 'border-danger ring-4 ring-danger/10',
         )}
       >

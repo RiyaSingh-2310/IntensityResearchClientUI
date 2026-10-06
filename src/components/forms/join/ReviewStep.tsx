@@ -15,7 +15,7 @@ function Row({ label, value }: { label: string; value: string }) {
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <section className="rounded-2xl border border-line bg-cream/60 px-4 py-2">
+    <section className="rounded-2xl border border-line bg-cream/40 px-4 py-2">
       <h4 className="pt-3 text-sm font-semibold tracking-wide text-ink">{title}</h4>
       <dl>{children}</dl>
     </section>

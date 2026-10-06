@@ -5,6 +5,8 @@ import { Field } from '@/components/ui/field'
 import { NumericInput } from '@/components/ui/numeric-input'
 import { RewardMethodSelect } from '@/components/rewards/RewardMethodSelect'
 import { RewardMethodMark } from '@/components/rewards/RewardMethodMark'
+import { countryName } from '@/content/countries'
+import { redemptionRemark, type RewardMethod } from '@/content/rewardMethods'
 import { asNumber, formatNumber } from '@/lib/utils'
 import { ApiRequestError } from '@/services/errors'
 import { rewardService } from '@/services/reward.service'
@@ -20,8 +22,8 @@ export function RedeemDialog({
   onSubmitted,
 }: {
   reward: RewardOption
-  /** Payout methods enabled by the API. */
-  methods: RewardOption[]
+  /** Rewards available in the recipient's country; `reward` is preselected. */
+  methods: RewardMethod[]
   points: number
   /** Points reserved by pending requests; the API rejects requests above points minus these. */
   heldPoints?: number
@@ -29,7 +31,7 @@ export function RedeemDialog({
   onClose: () => void
   onSubmitted: (name: string) => void
 }) {
-  const [methodId, setMethodId] = useState(reward.id)
+  const [methodId, setMethodId] = useState(() => reward.id)
   const [redeemPoints, setRedeemPoints] = useState<number | ''>('')
   const [submitting, setSubmitting] = useState(false)
   const inFlight = useRef(false)
@@ -60,7 +62,7 @@ export function RedeemDialog({
   async function confirmRedeem() {
     if (inFlight.current || !canRedeem) return
     if (!selectedMethod) {
-      setErrorMessage('Select a payout method to continue.')
+      setErrorMessage('Select a reward method to continue.')
       return
     }
     inFlight.current = true
@@ -68,11 +70,11 @@ export function RedeemDialog({
     setErrorMessage('')
     try {
       await rewardService.redeem({
-        rewardId: selectedMethod.id,
+        rewardId: reward.id,
         rewardName: selectedMethod.name,
         rewardPoints: asNumber(redeemPoints),
         paymentMethod: selectedMethod.apiValue,
-        remark: selectedMethod.name,
+        remark: redemptionRemark(selectedMethod),
       })
       onSubmitted(selectedMethod.name)
       onClose()
@@ -86,14 +88,18 @@ export function RedeemDialog({
 
   return (
     <Dialog open onOpenChange={(nextOpen) => { if (!nextOpen) onClose() }}>
-      <DialogContent title="Request a payout" description="Choose a payout method and the points you want to redeem.">
+      <DialogContent title="Request this reward" description="Choose a payout method and points before you submit.">
         {errorMessage ? (
           <p className="mb-4 rounded-xl bg-danger-soft px-4 py-3 text-sm text-danger" role="alert">
             {errorMessage}
           </p>
         ) : null}
         <div className="grid gap-4">
-          <dl className="grid gap-3 rounded-2xl border border-line bg-cream px-4 py-4 text-sm">
+          <dl className="grid gap-3 rounded-2xl border border-line bg-white px-4 py-4 text-sm">
+            <div className="flex items-center justify-between gap-4">
+              <dt className="text-muted">Catalog item</dt>
+              <dd className="font-medium text-ink">{reward.name}</dd>
+            </div>
             <div className="flex items-center justify-between gap-4">
               <dt className="text-muted">Current balance</dt>
               <dd className="font-medium text-ink">{formatNumber(points)}</dd>
@@ -103,17 +109,27 @@ export function RedeemDialog({
               <dd className="font-medium text-ink">{formatNumber(remaining)}</dd>
             </div>
             {selectedMethod ? (
-              <div className="flex items-center justify-between gap-4 border-t border-line pt-3">
-                <dt className="text-muted">Payout method</dt>
-                <dd className="flex items-center gap-2 font-medium text-ink">
-                  <RewardMethodMark method={selectedMethod} size="sm" decorative />
-                  {selectedMethod.name}
-                </dd>
-              </div>
+              <>
+                <div className="flex items-center justify-between gap-4 border-t border-line pt-3">
+                  <dt className="text-muted">Payout method</dt>
+                  <dd className="flex min-w-0 items-center gap-2 font-medium text-ink">
+                    <RewardMethodMark method={selectedMethod} size="sm" decorative />
+                    <span className="truncate">{selectedMethod.name}</span>
+                  </dd>
+                </div>
+                {selectedMethod.countryCode ? (
+                  <div className="flex items-center justify-between gap-4">
+                    <dt className="text-muted">Reward country</dt>
+                    <dd className="text-right font-medium text-ink">
+                      {countryName(selectedMethod.countryCode) || selectedMethod.countryCode}
+                    </dd>
+                  </div>
+                ) : null}
+              </>
             ) : null}
           </dl>
 
-          <Field label="Payout method" htmlFor="reward-method" required>
+          <Field label="Reward method" htmlFor="reward-method">
             <RewardMethodSelect
               id="reward-method"
               value={methodId}
@@ -126,7 +142,6 @@ export function RedeemDialog({
           <Field
             label="Points to redeem"
             htmlFor="redeem-points"
-            required
             hint={
               noBalance
                 ? 'No available balance'
@@ -151,7 +166,7 @@ export function RedeemDialog({
           </Field>
         </div>
         <p className="mt-4 text-sm leading-6 text-ink-soft">
-          Submitting creates a pending request. You can follow its status in your redemption history.
+          Submitting creates a pending request. You can follow approval, rejection, or completion in History.
         </p>
         <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
           <Button variant="outline" onClick={onClose}>

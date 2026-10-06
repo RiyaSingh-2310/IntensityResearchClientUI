@@ -4,17 +4,17 @@ import type { ButtonHTMLAttributes } from 'react'
 import { cn } from '@/lib/utils'
 
 const buttonVariants = cva(
-  'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-semibold transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:pointer-events-none disabled:opacity-45 [&_svg]:size-4 [&_svg]:shrink-0',
+  'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full text-sm font-medium transition-all duration-200 disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0',
   {
     variants: {
       variant: {
-        default: 'bg-brand text-white shadow-glow hover:bg-brand-mid active:bg-brand-deep',
-        signal: 'bg-signal text-on-signal hover:bg-signal-deep active:bg-signal-deep',
-        outline: 'border border-line bg-surface/60 text-ink hover:border-brand-mid/60 hover:bg-raised',
-        ghost: 'text-ink-soft hover:bg-raised hover:text-ink',
-        subtle: 'border border-line bg-raised text-ink-soft hover:text-ink',
-        danger: 'bg-[#dc2626] text-white hover:bg-[#ef4444]',
-        link: 'rounded-none px-0 text-accent underline-offset-4 hover:underline',
+        default: 'bg-brand text-white shadow-soft hover:bg-brand-deep motion-safe:hover:-translate-y-px',
+        accent: 'bg-accent text-ink shadow-soft hover:bg-accent-deep hover:text-white motion-safe:hover:-translate-y-px',
+        outline: 'border border-line bg-white text-ink hover:border-brand/40 hover:bg-brand-soft/60',
+        ghost: 'text-ink-soft hover:bg-brand-soft/70 hover:text-ink',
+        subtle: 'bg-ink text-cream hover:bg-ink-soft',
+        danger: 'bg-danger text-white hover:bg-danger/90',
+        link: 'rounded-none px-0 text-brand underline-offset-4 hover:underline',
       },
       size: {
         default: 'h-11 px-5',

@@ -14,7 +14,7 @@ export function AccordionTrigger({ className, children, ...props }: ComponentPro
     <AccordionPrimitive.Header>
       <AccordionPrimitive.Trigger
         className={cn(
-          'flex w-full items-center justify-between py-5 text-left text-base font-medium text-ink transition-colors hover:text-accent [&[data-state=open]]:text-accent [&[data-state=open]>svg]:rotate-180',
+          'flex w-full items-center justify-between py-5 text-left text-base font-medium text-ink transition-colors hover:text-brand [&[data-state=open]]:text-brand [&[data-state=open]>svg]:rotate-180',
           className,
         )}
         {...props}

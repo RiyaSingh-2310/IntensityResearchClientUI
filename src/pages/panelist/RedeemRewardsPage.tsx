@@ -1,15 +1,17 @@
 import { useMemo, useRef, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
+import { RewardCountrySelect } from '@/components/rewards/RewardCountrySelect'
 import { RewardMethodSelect } from '@/components/rewards/RewardMethodSelect'
 import { RewardRequestHistoryList } from '@/components/rewards/RewardRequestHistoryList'
 import { EmptyState, ErrorState, LoadingSkeleton } from '@/components/shared/PageState'
 import { Button } from '@/components/ui/button'
 import { Field } from '@/components/ui/field'
-import { Input } from '@/components/ui/input'
 import { NumericInput } from '@/components/ui/numeric-input'
 import { paths } from '@/config/paths'
+import { countryName } from '@/content/countries'
+import { describeRewardMethod, redemptionRemark, rewardMethodsForCountry } from '@/content/rewardMethods'
 import { useAsync } from '@/hooks/useAsync'
-import { toRewardOptions } from '@/lib/paymentMethods'
+import { useRewardCountry } from '@/hooks/useRewardCountry'
 import { asNumber, formatNumber } from '@/lib/utils'
 import { ApiRequestError } from '@/services/errors'
 import { rewardRequestService } from '@/services/rewardRequest.service'
@@ -17,10 +19,16 @@ import { rewardService } from '@/services/reward.service'
 
 export function RedeemRewardsPage() {
   const balance = useAsync(() => rewardService.getBalance())
+  const settings = useAsync(() => rewardService.getSettings().catch(() => null), 'redeem-settings')
   const history = useAsync(() => rewardRequestService.list())
+  const [country, setCountry] = useRewardCountry()
   const methods = useMemo(
-    () => toRewardOptions(balance.data?.payment_methods, balance.data?.minimum_payout),
-    [balance.data?.payment_methods, balance.data?.minimum_payout],
+    () =>
+      rewardMethodsForCountry(country, {
+        methods: balance.data?.payment_methods ?? settings.data?.payment_methods,
+        settings: settings.data,
+      }),
+    [country, balance.data?.payment_methods, settings.data],
   )
   const [methodId, setMethodId] = useState('')
   const [points, setPoints] = useState<number | ''>('')
@@ -41,7 +49,8 @@ export function RedeemRewardsPage() {
   const redeemable = history.data ? Math.max(available - pendingPoints, 0) : available
   const resolvedMethodId =
     methodId && methods.some((method) => method.id === methodId) ? methodId : methods[0]?.id ?? ''
-  const selected = methods.find((method) => method.id === resolvedMethodId)
+  const selected = methods.find((method) => method.id === resolvedMethodId) ?? methods[0]
+  const recipientCountry = countryName(country) || country
   const pointsValue = points === '' ? 0 : asNumber(points)
   const noBalance = available <= 0
   const pointsError = noBalance
@@ -76,9 +85,11 @@ export function RedeemRewardsPage() {
         rewardName: selected.name,
         rewardPoints: pointsValue,
         paymentMethod: selected.apiValue,
-        remark: remark.trim() || selected.name,
+        remark: redemptionRemark(selected, remark),
       })
-      setSuccessMessage(`Your ${selected.name} request for ${formatNumber(pointsValue)} points was submitted.`)
+      setSuccessMessage(
+        `Your ${selected.name} request for ${formatNumber(pointsValue)} points was submitted.`,
+      )
       setPoints('')
       setRemark('')
       balance.reload()
@@ -91,18 +102,18 @@ export function RedeemRewardsPage() {
     }
   }
 
-  const loading = balance.loading && !balance.data
+  const loading = (balance.loading && !balance.data) || (settings.loading && !settings.data)
   const error = balance.error
 
   return (
     <div>
       <section className="hero-grid px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
         <div className="mx-auto max-w-6xl">
-          <p className="text-xs font-semibold tracking-[0.18em] text-accent uppercase">Member rewards</p>
-          <h1 className="font-display mt-3 text-4xl font-semibold text-strong sm:text-5xl">Redeem rewards</h1>
+          <p className="text-xs font-semibold tracking-[0.18em] text-brand uppercase">Member rewards</p>
+          <h1 className="font-display mt-3 text-4xl text-ink sm:text-5xl">Redeem Rewards</h1>
           <p className="mt-4 max-w-2xl text-base leading-8 text-ink-soft">
-            Choose a payout method, enter the points you want to redeem, and submit a request. Every request is reviewed,
-            and its status appears in your redemption history below.
+            Choose a payout method, enter the points you want to redeem, and submit a request. Approved payouts appear
+            in your reward history below.
           </p>
         </div>
       </section>
@@ -114,36 +125,31 @@ export function RedeemRewardsPage() {
         {!loading && !error ? (
           <section className="grid gap-6 lg:grid-cols-[0.92fr_1.08fr]">
             <div className="grid content-start gap-4">
-              <div className="surface-gradient rounded-2xl border border-brand-mid/30 px-6 py-6 shadow-glow">
-                <p className="text-xs font-semibold tracking-[0.16em] text-accent uppercase">Available balance</p>
-                <p className="font-display mt-2 text-4xl font-semibold text-strong">
-                  {formatNumber(available)} <span className="text-base font-medium text-ink-soft">points</span>
-                </p>
+              <div className="rounded-[1.6rem] border border-brand/15 bg-brand-soft/40 px-6 py-6">
+                <p className="text-xs tracking-[0.16em] text-muted uppercase">Available balance</p>
+                <p className="font-display mt-2 text-4xl text-ink">{formatNumber(available)}</p>
                 <p className="mt-3 text-sm leading-6 text-ink-soft">
-                  {noBalance
-                    ? 'Complete eligible surveys to start earning points.'
-                    : redeemable >= minimum
-                      ? `You can redeem up to ${formatNumber(redeemable)} points now.`
-                      : `You need ${formatNumber(Math.max(minimum - redeemable, 0))} more redeemable points to reach the minimum payout.`}{' '}
-                  <Link to={paths.rewards} className="font-medium text-accent hover:underline">
-                    About payout methods
-                  </Link>
+                  Points you can use toward a payout. Browse the{' '}
+                  <Link to={paths.rewards} className="font-medium text-brand hover:underline">
+                    rewards catalog
+                  </Link>{' '}
+                  for option details.
                 </p>
               </div>
               <dl className="grid grid-cols-2 gap-3">
-                <div className="rounded-2xl border border-line bg-surface px-4 py-4">
+                <div className="rounded-2xl border border-line bg-white px-4 py-4">
                   <dt className="text-[11px] tracking-[0.14em] text-muted uppercase">Minimum</dt>
-                  <dd className="font-display mt-1 text-2xl font-semibold text-strong">{formatNumber(minimum)}</dd>
+                  <dd className="font-display mt-1 text-2xl text-ink">{formatNumber(minimum)}</dd>
                   <p className="mt-1 text-xs leading-5 text-ink-soft">Points needed to request a payout</p>
                 </div>
-                <div className="rounded-2xl border border-line bg-surface px-4 py-4">
-                  <dt className="text-[11px] tracking-[0.14em] text-muted uppercase">Payout methods</dt>
-                  <dd className="font-display mt-1 text-2xl font-semibold text-strong">{formatNumber(methods.length)}</dd>
-                  <p className="mt-1 text-xs leading-5 text-ink-soft">Options enabled for your account</p>
+                <div className="rounded-2xl border border-line bg-white px-4 py-4">
+                  <dt className="text-[11px] tracking-[0.14em] text-muted uppercase">Reward options</dt>
+                  <dd className="font-display mt-1 text-2xl text-ink">{formatNumber(methods.length)}</dd>
+                  <p className="mt-1 text-xs leading-5 text-ink-soft">Available in {recipientCountry}</p>
                 </div>
-                <div className="rounded-2xl border border-line bg-surface px-4 py-4">
+                <div className="rounded-2xl border border-line bg-white px-4 py-4">
                   <dt className="text-[11px] tracking-[0.14em] text-muted uppercase">In review</dt>
-                  <dd className="font-display mt-1 text-2xl font-semibold text-strong">
+                  <dd className="font-display mt-1 text-2xl text-ink">
                     {historyReady ? formatNumber(pendingPoints) : history.error ? '—' : '…'}
                   </dd>
                   <p className="mt-1 text-xs leading-5 text-ink-soft">
@@ -154,9 +160,9 @@ export function RedeemRewardsPage() {
                         : 'Loading your requests'}
                   </p>
                 </div>
-                <div className="rounded-2xl border border-line bg-surface px-4 py-4">
+                <div className="rounded-2xl border border-line bg-white px-4 py-4">
                   <dt className="text-[11px] tracking-[0.14em] text-muted uppercase">Completed</dt>
-                  <dd className="font-display mt-1 text-2xl font-semibold text-strong">
+                  <dd className="font-display mt-1 text-2xl text-ink">
                     {historyReady ? formatNumber(completedRequests.length) : history.error ? '—' : '…'}
                   </dd>
                   <p className="mt-1 text-xs leading-5 text-ink-soft">Approved or completed payouts</p>
@@ -165,12 +171,12 @@ export function RedeemRewardsPage() {
             </div>
 
             <form
-              className="rounded-2xl border border-line bg-surface p-5 shadow-card sm:p-6"
+              className="rounded-[1.6rem] border border-line bg-white p-5 shadow-card sm:p-6"
               onSubmit={onSubmit}
               noValidate
             >
-              <h2 className="font-display text-2xl font-semibold text-strong">Redemption request</h2>
-              <p className="mt-1 text-sm text-ink-soft">Select a payout method, then enter your points.</p>
+              <h2 className="font-display text-2xl text-ink">Redemption request</h2>
+              <p className="mt-1 text-sm text-ink-soft">Select a reward method, then confirm your points.</p>
 
               {formError ? (
                 <p className="mt-4 rounded-xl bg-danger-soft px-4 py-3 text-sm text-danger" role="alert">
@@ -183,14 +189,32 @@ export function RedeemRewardsPage() {
                 </p>
               ) : null}
 
+              <Field
+                label="Reward country"
+                htmlFor="redeem-country"
+                required
+                hint="Only rewards that can be delivered in this country are listed."
+                className="mt-5"
+              >
+                <RewardCountrySelect
+                  id="redeem-country"
+                  value={country}
+                  onValueChange={(code) => {
+                    setCountry(code)
+                    setMethodId('')
+                  }}
+                  disabled={submitting}
+                />
+              </Field>
+
               {!methods.length ? (
                 <EmptyState
-                  title="No payout methods available"
-                  description="Payout methods will appear here when they are enabled. Your points stay in your balance."
+                  title={`No rewards available in ${recipientCountry}`}
+                  description="None of the panel’s reward options can be delivered to this country right now. Choose another country if you live elsewhere, or contact support."
                 />
               ) : (
-                <div className="mt-5 grid gap-4">
-                  <Field label="Payout method" htmlFor="redeem-method" required>
+                <div className="mt-4 grid gap-4">
+                  <Field label="Reward method" htmlFor="redeem-method" required>
                     <RewardMethodSelect
                       id="redeem-method"
                       value={resolvedMethodId}
@@ -199,6 +223,11 @@ export function RedeemRewardsPage() {
                       disabled={submitting || noBalance}
                     />
                   </Field>
+                  {selected ? (
+                    <p className="rounded-2xl border border-line bg-cream/60 px-4 py-3 text-sm leading-6 text-ink-soft">
+                      {describeRewardMethod(selected)}
+                    </p>
+                  ) : null}
                   <Field
                     label="Points to redeem"
                     htmlFor="redeem-amount"
@@ -226,8 +255,9 @@ export function RedeemRewardsPage() {
                     />
                   </Field>
                   <Field label="Remark (optional)" htmlFor="redeem-remark">
-                    <Input
+                    <input
                       id="redeem-remark"
+                      className="h-11 w-full rounded-xl border border-line bg-white px-3.5 text-sm text-ink shadow-soft focus-visible:border-brand focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand/10 disabled:cursor-not-allowed disabled:bg-cream disabled:text-muted"
                       value={remark}
                       disabled={noBalance || submitting}
                       onChange={(event) => setRemark(event.target.value)}
@@ -252,14 +282,14 @@ export function RedeemRewardsPage() {
         <section>
           <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <p className="text-xs font-semibold tracking-[0.16em] text-accent uppercase">Activity</p>
-              <h2 className="font-display mt-1 text-3xl font-semibold text-strong">Redemption history</h2>
+              <p className="text-xs font-semibold tracking-[0.16em] text-brand uppercase">Activity</p>
+              <h2 className="font-display mt-1 text-3xl text-ink">Reward redemption history</h2>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-ink-soft">
-                Requests from your account. The status updates once our team reviews the payout.
+                Live requests from your account. Status updates when an administrator reviews the payout.
               </p>
             </div>
             <Button asChild variant="outline" size="sm">
-              <Link to={paths.history}>Open full history</Link>
+              <Link to={paths.history}>Open Reward History</Link>
             </Button>
           </div>
 

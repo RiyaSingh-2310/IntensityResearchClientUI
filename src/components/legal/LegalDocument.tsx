@@ -14,21 +14,21 @@ function RichText({ text }: { text: string }) {
       {parts.map((part, index) => {
         if (part === 'Privacy Policy') {
           return (
-            <Link key={`${part}-${index}`} to={paths.privacyPolicy} className="font-medium text-accent underline-offset-4 hover:underline">
+            <Link key={`${part}-${index}`} to={paths.privacyPolicy} className="font-medium text-brand underline-offset-4 hover:underline">
               {part}
             </Link>
           )
         }
         if (part.includes('@')) {
           return (
-            <a key={`${part}-${index}`} href={`mailto:${part}`} className="font-medium text-accent underline-offset-4 hover:underline">
+            <a key={`${part}-${index}`} href={`mailto:${part}`} className="font-medium text-brand underline-offset-4 hover:underline">
               {part}
             </a>
           )
         }
         if (part === 'intensityresearch.com') {
           return (
-            <a key={`${part}-${index}`} href={brand.website} target="_blank" rel="noreferrer" className="font-medium text-accent underline-offset-4 hover:underline">
+            <a key={`${part}-${index}`} href={brand.website} target="_blank" rel="noreferrer" className="font-medium text-brand underline-offset-4 hover:underline">
               {part}
             </a>
           )
@@ -93,7 +93,7 @@ export function LegalDocument({
           eyebrow="Terms of Service"
           title={
             <>
-              Read these terms <span className="text-accent">carefully</span>
+              Read these terms <span className="text-accent-deep">carefully</span>
             </>
           }
           description={content.description}
@@ -103,7 +103,7 @@ export function LegalDocument({
           eyebrow={content.eyebrow}
           title={
             <>
-              Privacy <span className="text-accent">Policy</span>
+              Privacy <span className="text-accent-deep">Policy</span>
             </>
           }
           description={content.description}
@@ -136,7 +136,7 @@ function AccordionLayout({
               <AccordionItem
                 key={topic.id}
                 value={topic.id}
-                className="overflow-hidden rounded-2xl border border-line bg-surface px-5 shadow-card data-[state=open]:border-brand/25 data-[state=open]:shadow-soft"
+                className="overflow-hidden rounded-2xl border border-line bg-white px-5 shadow-card data-[state=open]:border-brand/25 data-[state=open]:shadow-soft"
               >
                 <AccordionTrigger className="py-4 text-left text-base font-semibold sm:text-lg">{topic.title}</AccordionTrigger>
                 <AccordionContent>

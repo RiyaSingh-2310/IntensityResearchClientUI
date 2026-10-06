@@ -12,6 +12,8 @@ export interface AuthContextValue {
   ready: boolean
   /** True after the API rejected the stored token, until the next sign-in. */
   sessionExpired: boolean
+  /** Set when a stored session could not be checked (network or server error); the token is kept. */
+  connectionError: string
   login: (payload: LoginPayload) => Promise<void>
   register: (payload: RegisterPayload) => Promise<RegisterOutcome>
   completeSession: (token: string, user: AuthUser, rememberMe?: boolean) => void
@@ -22,10 +24,20 @@ export interface AuthContextValue {
 // eslint-disable-next-line react-refresh/only-export-components -- context is consumed by useAuth
 export const AuthContext = createContext<AuthContextValue | null>(null)
 
+/** Only a rejected token ends the session; network failures and server errors must not sign the member out. */
+function sessionRejected(error: unknown) {
+  return error instanceof ApiRequestError && (error.status === 401 || error.status === 403)
+}
+
+function connectionMessage(error: unknown) {
+  return error instanceof ApiRequestError ? error.message : 'Unable to reach the server. Please try again.'
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null)
   const [ready, setReady] = useState(() => !readToken())
   const [sessionExpired, setSessionExpired] = useState(false)
+  const [connectionError, setConnectionError] = useState('')
 
   const refresh = useCallback(async () => {
     if (!readToken()) {
@@ -34,11 +46,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     try {
       const nextUser = await authService.me()
+      setConnectionError('')
       setUser(nextUser)
       return nextUser
-    } catch {
-      clearToken()
-      setUser(null)
+    } catch (error) {
+      if (sessionRejected(error)) {
+        clearToken()
+        setUser(null)
+      } else {
+        setConnectionError(connectionMessage(error))
+      }
       return null
     }
   }, [])
@@ -59,8 +76,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
         setUser(nextUser)
       })
-      .catch(() => {
-        clearToken()
+      .catch((error) => {
+        if (sessionRejected(error)) clearToken()
+        else if (!cancelled) setConnectionError(connectionMessage(error))
         if (!cancelled) setUser(null)
       })
       .finally(() => {
@@ -84,6 +102,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const completeSession = useCallback((token: string, nextUser: AuthUser, rememberMe = true) => {
     writeToken(token, rememberMe)
     setSessionExpired(false)
+    setConnectionError('')
     setUser(nextUser)
   }, [])
 
@@ -119,13 +138,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     } finally {
       clearToken()
+      setConnectionError('')
       setUser(null)
     }
   }, [])
 
   const value = useMemo(
-    () => ({ user, ready, sessionExpired, login, register, completeSession, refresh, logout }),
-    [user, ready, sessionExpired, login, register, completeSession, refresh, logout],
+    () => ({ user, ready, sessionExpired, connectionError, login, register, completeSession, refresh, logout }),
+    [user, ready, sessionExpired, connectionError, login, register, completeSession, refresh, logout],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

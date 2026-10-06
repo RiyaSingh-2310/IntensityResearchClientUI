@@ -22,7 +22,7 @@ export function Input({ className, type = 'text', onKeyDown, ...props }: InputHT
       ref={ref}
       type={type}
       className={cn(
-        'flex h-11 w-full rounded-xl border border-line bg-cream px-3.5 text-sm text-ink transition-colors placeholder:text-muted hover:border-ink/25 focus-visible:border-brand-mid focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand/25 aria-invalid:border-danger aria-invalid:ring-4 aria-invalid:ring-danger/20 read-only:text-ink-soft read-only:hover:border-line disabled:cursor-not-allowed disabled:bg-paper disabled:opacity-70',
+        'flex h-11 w-full rounded-xl border border-line bg-white px-3.5 text-sm text-ink shadow-[inset_0_1px_0_rgb(255_255_255_/_0.8)] transition-colors placeholder:text-muted/80 focus-visible:border-brand focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand/10 aria-invalid:border-danger aria-invalid:ring-4 aria-invalid:ring-danger/10 disabled:cursor-not-allowed disabled:bg-paper/80',
         className,
       )}
       {...props}

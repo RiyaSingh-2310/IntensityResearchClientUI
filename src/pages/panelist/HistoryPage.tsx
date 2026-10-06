@@ -17,12 +17,10 @@ export function HistoryPage() {
   const requests = useAsync(() => rewardRequestService.list())
   const earnings = useAsync(() => rewardRequestService.history())
 
-  const loading = (requests.loading && !requests.data) || (earnings.loading && !earnings.data)
-  const error = requests.error || earnings.error
-  const reload = () => {
-    requests.reload()
-    earnings.reload()
-  }
+  const active = tab === 'rewards' ? requests : earnings
+  const loading = active.loading && !active.data
+  const error = active.error
+  const reload = active.reload
 
   const rewardItems = requests.data?.items ?? []
   const earningItems = (earnings.data?.items ?? []).filter((item) => item.type === 'earned' || item.type === 'bonus')
@@ -31,24 +29,24 @@ export function HistoryPage() {
     <div>
       <section className="hero-grid px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
         <div className="mx-auto max-w-6xl">
-          <p className="text-xs font-semibold tracking-[0.18em] text-accent uppercase">Your activity</p>
-          <h1 className="font-display mt-3 text-4xl font-semibold text-strong sm:text-5xl">History</h1>
+          <p className="text-xs font-semibold tracking-[0.18em] text-brand uppercase">Your activity</p>
+          <h1 className="font-display mt-3 text-4xl text-ink sm:text-5xl">Reward History</h1>
           <p className="mt-4 max-w-2xl text-base leading-8 text-ink-soft">
-            Review your payout requests and the points you have earned.
+            Review redemption requests and points you have earned. Status values come from your account activity.
           </p>
           <div className="mt-6">
             <Button asChild variant="outline">
-              <Link to={paths.redeemRewards}>Redeem points</Link>
+              <Link to={paths.redeemRewards}>Redeem Rewards</Link>
             </Button>
           </div>
         </div>
       </section>
 
       <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
-        <div className="flex w-full overflow-x-auto rounded-full border border-line bg-surface p-1 shadow-soft sm:inline-flex sm:w-auto">
+        <div className="flex w-full overflow-x-auto rounded-full border border-line bg-white p-1 shadow-soft sm:inline-flex sm:w-auto">
           {(
             [
-              { id: 'rewards', label: 'Payout requests' },
+              { id: 'rewards', label: 'Reward history' },
               { id: 'earnings', label: 'Points earned' },
             ] as const
           ).map((item) => (
@@ -59,7 +57,7 @@ export function HistoryPage() {
               onClick={() => setTab(item.id)}
               className={cn(
                 'min-w-0 flex-1 rounded-full px-3 py-2 text-xs whitespace-nowrap transition-all duration-200 sm:flex-none sm:px-4 sm:text-sm',
-                tab === item.id ? 'bg-raised font-semibold text-strong shadow-soft' : 'text-ink-soft hover:text-ink',
+                tab === item.id ? 'bg-ink font-medium text-cream shadow-soft' : 'text-ink-soft hover:text-ink',
               )}
             >
               {item.label}
@@ -75,7 +73,7 @@ export function HistoryPage() {
             <RewardRequestHistoryList
               items={rewardItems}
               emptyActionTo={paths.redeemRewards}
-              emptyActionLabel="Redeem points"
+              emptyActionLabel="Redeem Rewards"
             />
           ) : null}
 

@@ -35,7 +35,7 @@ export function RegistrationProgress({
                 aria-label={`Step ${index + 1} of ${steps.length}: ${item.title}${complete ? ' (completed)' : ''}`}
                 className={cn(
                   'flex w-full flex-col items-center gap-1 rounded-xl px-0.5 py-1 text-center text-[11px] sm:px-1 md:text-xs',
-                  isCurrent && 'font-semibold text-accent',
+                  isCurrent && 'font-semibold text-brand',
                   complete && 'text-ink',
                   !isCurrent && !complete && 'text-muted',
                 )}
@@ -45,8 +45,8 @@ export function RegistrationProgress({
                   className={cn(
                     'grid size-7 place-items-center rounded-full border text-[11px]',
                     isCurrent && 'border-brand bg-brand text-white',
-                    complete && 'border-brand bg-brand-soft text-accent',
-                    !isCurrent && !complete && 'border-line bg-surface',
+                    complete && 'border-brand bg-brand-soft text-brand',
+                    !isCurrent && !complete && 'border-line bg-white',
                   )}
                 >
                   {index + 1}
@@ -58,7 +58,7 @@ export function RegistrationProgress({
         })}
       </ol>
       {current ? (
-        <p className="mt-2 text-center text-xs font-medium text-accent sm:hidden" aria-hidden="true">
+        <p className="mt-2 text-center text-xs font-medium text-brand sm:hidden" aria-hidden="true">
           Step {step + 1} of {steps.length}: {current.title}
         </p>
       ) : null}

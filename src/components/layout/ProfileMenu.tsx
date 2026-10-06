@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'motion/react'
-import { ChevronDown, KeyRound, LayoutDashboard, LogOut, Settings } from 'lucide-react'
+import { ChevronDown, ClipboardList, KeyRound, LogOut, Settings } from 'lucide-react'
 import { useEffect, useId, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { paths } from '@/config/paths'
@@ -8,9 +8,9 @@ import { useMotionConfig } from '@/lib/motion'
 import { givenName, initials, mediaUrl } from '@/lib/utils'
 
 const menuLinks = [
-  { to: paths.dashboard, label: 'Dashboard', icon: LayoutDashboard },
-  { to: paths.settings, label: 'Profile & settings', icon: Settings },
-  { to: `${paths.settings}#change-password`, label: 'Change password', icon: KeyRound },
+  { to: paths.surveys, label: 'My Surveys', icon: ClipboardList },
+  { to: paths.settings, label: 'Settings', icon: Settings },
+  // { to: `${paths.settings}#change-password`, label: 'Change Password', icon: KeyRound },
 ]
 
 export function ProfileMenu({
@@ -63,7 +63,7 @@ export function ProfileMenu({
     <div ref={rootRef} className="relative">
       <button
         type="button"
-        className="flex max-w-[11rem] items-center gap-2 rounded-full border border-line bg-surface py-1 pr-2 pl-1 text-left text-ink transition-colors hover:border-brand-mid/60 hover:bg-raised sm:max-w-[13rem] sm:pr-2.5"
+        className="flex max-w-[11rem] items-center gap-2 rounded-full border border-line bg-white py-1 pr-2 pl-1 text-left text-ink shadow-soft transition-colors hover:border-brand/30 hover:bg-cream sm:max-w-[13rem] sm:pr-2.5"
         aria-expanded={open}
         aria-haspopup="menu"
         aria-controls={menuId}
@@ -87,7 +87,7 @@ export function ProfileMenu({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 6, scale: 0.98 }}
             transition={{ duration }}
-            className="absolute right-0 z-50 mt-2 w-[min(16rem,calc(100vw-1.5rem))] origin-top-right overflow-hidden rounded-2xl border border-line bg-surface p-2 text-ink shadow-lift"
+            className="absolute right-0 z-50 mt-2 w-[min(16rem,calc(100vw-1.5rem))] origin-top-right overflow-hidden rounded-2xl border border-line bg-white p-2 text-ink shadow-lift"
           >
             <div className="rounded-xl px-3 py-2.5">
               <p className="truncate text-sm font-medium text-ink">{user.name}</p>
@@ -96,27 +96,26 @@ export function ProfileMenu({
             <div className="my-1 h-px bg-line" />
             {menuLinks.map(({ to, label, icon: Icon }) => (
               <Link
-                key={to}
+                key={label}
                 role="menuitem"
                 to={to}
                 onClick={() => {
                   onOpenChange?.(false)
                   onNavigate?.()
                 }}
-                className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-ink-soft transition-colors hover:bg-raised hover:text-ink"
+                className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-ink-soft transition-colors hover:bg-cream hover:text-ink"
               >
-                <Icon className="size-4" aria-hidden="true" />
+                <Icon className="size-4" />
                 {label}
               </Link>
             ))}
-            <div className="my-1 h-px bg-line" />
             <button
               type="button"
               role="menuitem"
               onClick={() => void onLogout()}
-              className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm text-ink-soft transition-colors hover:bg-raised hover:text-ink"
+              className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm text-ink-soft transition-colors hover:bg-cream hover:text-ink"
             >
-              <LogOut className="size-4" aria-hidden="true" />
+              <LogOut className="size-4" />
               Logout
             </button>
           </motion.div>

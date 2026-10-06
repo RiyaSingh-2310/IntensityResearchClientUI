@@ -16,7 +16,7 @@ export function ActivityList({ items }: { items: ActivityItem[] }) {
         const Icon = icons[item.kind] ?? Sparkles
         return (
           <li key={item.id} className="flex items-start gap-3">
-            <span className="grid size-7 shrink-0 place-items-center rounded-full border border-line bg-surface text-accent shadow-soft">
+            <span className="grid size-7 shrink-0 place-items-center rounded-full border border-line bg-white text-brand shadow-soft">
               <Icon className="size-3.5" />
             </span>
             <div className="min-w-0 pt-1">

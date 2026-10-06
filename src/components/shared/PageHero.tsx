@@ -23,11 +23,6 @@ export function PageHero({
 
   return (
     <section className={cn('hero-grid relative overflow-hidden px-4 py-16 sm:px-6 lg:px-8 lg:py-20', className)}>
-      <div className="pointer-events-none absolute inset-0" aria-hidden="true">
-        <span className="absolute top-16 left-[12%] size-2 rounded-full bg-accent/50" />
-        <span className="absolute top-24 right-[14%] size-1.5 rounded-full bg-signal/70" />
-        <span className="absolute bottom-16 left-[22%] size-1.5 rounded-full bg-accent/30" />
-      </div>
       <motion.div
         className="relative mx-auto max-w-3xl text-center"
         initial={reduce ? false : { opacity: 0, y: 16 }}
@@ -36,7 +31,7 @@ export function PageHero({
       >
         {eyebrow ? <Badge tone="default">{eyebrow}</Badge> : null}
         {beforeTitle}
-        <h1 className="font-display mt-5 text-4xl leading-[1.08] font-semibold text-strong text-balance sm:text-5xl lg:text-6xl">
+        <h1 className="font-display mt-5 text-4xl leading-[1.08] text-ink text-balance sm:text-5xl lg:text-6xl">
           {title}
         </h1>
         <p className="mx-auto mt-5 max-w-2xl text-base leading-8 text-ink-soft sm:text-lg">{description}</p>

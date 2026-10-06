@@ -1,85 +1,82 @@
-import { Globe, Mail } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { Logo } from '@/components/shared/Logo'
 import { brand } from '@/config/brand'
-import { paths } from '@/config/paths'
 import { useAuth } from '@/hooks/useAuth'
 
-const linkClass =
-  'inline-flex rounded py-0.5 text-sm text-ink-soft underline-offset-4 transition-colors hover:text-strong hover:underline'
+type FooterLink = { to: string; label: string; external?: boolean }
+
+const linkClass = 'inline-flex py-0.5 text-sm text-cream/75 underline-offset-4 transition-colors hover:text-white hover:underline'
 
 export function PublicFooter() {
   const { user } = useAuth()
 
-  const columns = [
+  const columns: Array<{ title: string; links: FooterLink[] }> = [
     {
-      title: 'Panel',
+      title: 'Platform',
       links: [
-        { to: paths.howItWorks, label: 'How It Works' },
-        { to: paths.rewards, label: 'Rewards' },
-        user ? { to: paths.dashboard, label: 'Dashboard' } : { to: paths.join, label: 'Join the Panel' },
-        user ? { to: paths.surveys, label: 'My Surveys' } : { to: paths.login, label: 'Member Login' },
+        { to: '/how-it-works', label: 'How It Works' },
+        { to: '/rewards', label: 'Rewards' },
+        { to: '/help', label: 'Help Center' },
+        user ? { to: '/dashboard', label: 'Dashboard' } : { to: '/login', label: 'Member Portal' },
       ],
     },
     {
-      title: 'Support',
+      title: 'Company',
       links: [
-        { to: paths.help, label: 'Help Center' },
-        { to: paths.contact, label: 'Contact Us' },
-        { to: paths.about, label: 'About Us' },
+        { to: '/about', label: 'About Us' },
+        { to: '/contact', label: 'Contact' },
+        { to: `mailto:${brand.email}`, label: brand.email, external: true },
+        { to: brand.website, label: brand.websiteLabel, external: true },
       ],
     },
     {
       title: 'Legal',
       links: [
-        { to: paths.termsConditions, label: 'Terms & Conditions' },
-        { to: paths.privacyPolicy, label: 'Privacy Policy' },
+        { to: '/terms-conditions', label: 'Terms & Conditions' },
+        { to: '/privacy-policy', label: 'Privacy Policy' },
       ],
     },
   ]
 
   return (
-    <footer data-theme="dark" className="border-t border-line bg-surface text-ink">
-      <div className="mx-auto grid max-w-7xl gap-12 px-4 py-14 sm:px-6 lg:grid-cols-[1.4fr_repeat(3,1fr)] lg:px-8 lg:py-16">
+    <footer className="border-t border-white/10 bg-ink text-cream">
+      <div className="mx-auto grid max-w-7xl gap-12 px-4 py-16 sm:px-6 lg:grid-cols-[1.4fr_repeat(3,1fr)] lg:px-8">
         <div>
-          <Logo to={paths.home} />
-          <p className="mt-5 max-w-sm text-sm leading-7 text-ink-soft">
-            A market research panel where your opinions help shape products, services, and brands — and earn you reward points along the way.
+          <Logo variant="footer" to="/" />
+          <p className="mt-5 max-w-sm text-sm leading-7 text-cream/70">
+            Share your opinions and earn rewards with a trusted research panel built for privacy, fairness, and transparent payouts.
           </p>
-          <ul className="mt-6 space-y-2 text-sm">
-            <li>
-              <a href={`mailto:${brand.email}`} className={`${linkClass} items-center gap-2`}>
-                <Mail className="size-4 text-accent" aria-hidden="true" />
-                {brand.email}
-              </a>
-            </li>
-            <li>
-              <a href={brand.website} target="_blank" rel="noreferrer" className={`${linkClass} items-center gap-2`}>
-                <Globe className="size-4 text-accent" aria-hidden="true" />
-                {brand.websiteLabel}
-              </a>
-            </li>
-          </ul>
         </div>
         {columns.map((column) => (
-          <nav key={column.title} aria-label={column.title}>
-            <p className="text-xs font-semibold tracking-[0.2em] text-signal uppercase">{column.title}</p>
+          <div key={column.title}>
+            <p className="text-xs font-semibold tracking-[0.2em] text-accent uppercase">{column.title}</p>
             <ul className="mt-4 space-y-2.5">
               {column.links.map((link) => (
-                <li key={link.label}>
-                  <Link to={link.to} className={linkClass}>
-                    {link.label}
-                  </Link>
+                <li key={link.label} className="min-w-0">
+                  {link.external ? (
+                    <a
+                      href={link.to}
+                      className={`${linkClass} break-all`}
+                      target={link.to.startsWith('http') ? '_blank' : undefined}
+                      rel={link.to.startsWith('http') ? 'noreferrer' : undefined}
+                    >
+                      {link.label}
+                    </a>
+                  ) : (
+                    <Link to={link.to} className={linkClass}>
+                      {link.label}
+                    </Link>
+                  )}
                 </li>
               ))}
             </ul>
-          </nav>
+          </div>
         ))}
       </div>
-      <div className="border-t border-line">
-        <div className="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-6 text-xs text-muted sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
+      <div className="border-t border-white/10">
+        <div className="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-6 text-xs text-cream/55 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
           <p>© {new Date().getFullYear()} {brand.name}. All rights reserved.</p>
-          <p>Honest opinions. Protected privacy. Rewarded participation.</p>
+          <p>Trusted research. Protected privacy. Real rewards.</p>
         </div>
       </div>
     </footer>

@@ -193,7 +193,7 @@ export function JoinPage() {
         const Icon = trustIcons[index] ?? Lock
         return (
           <span key={item} className="inline-flex items-center gap-1.5">
-            <Icon className="size-3.5 text-accent" />
+            <Icon className="size-3.5 text-brand" />
             {item}
           </span>
         )
@@ -224,10 +224,10 @@ export function JoinPage() {
             <EmptyState title="Registration questions are unavailable right now." description="Please try again shortly." />
           ) : null}
           {!questionsState.loading && !questionsState.error && hasQuestions ? (
-            <form ref={formRef} className="overflow-hidden rounded-3xl border border-line bg-surface p-5 shadow-card sm:p-8" onSubmit={onSubmit} noValidate>
-              <h2 className="font-display text-2xl font-semibold text-ink sm:text-3xl">Create your Intensity Research account</h2>
+            <form ref={formRef} className="overflow-hidden rounded-3xl border border-line bg-white p-5 shadow-card sm:p-8" onSubmit={onSubmit} noValidate>
+              <h2 className="font-display text-3xl text-ink sm:text-4xl">Create Your Intensity Research Account</h2>
               <p className="mt-2 text-sm leading-6 text-ink-soft">
-                It takes a few minutes. Your answers help us invite you to studies that match your profile.
+                Join our research community and receive survey opportunities that match your profile.
               </p>
               <div>
                 <div className="mt-6">
@@ -297,8 +297,8 @@ export function JoinPage() {
           ) : null}
           <p className="mt-6 text-center text-sm text-muted">
             Already a member?{' '}
-            <Link to="/login" className="font-medium text-accent hover:underline">
-              Log in
+            <Link to="/login" className="font-medium text-brand hover:underline">
+              Login
             </Link>
           </p>
         </div>

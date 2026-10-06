@@ -13,7 +13,7 @@ export function FaqAccordion({ items, className }: { items: FaqItem[]; className
         <AccordionItem
           key={item.q}
           value={item.q}
-          className="overflow-hidden rounded-2xl border border-line bg-surface px-5 transition-colors hover:border-ink/20 data-[state=open]:border-brand-mid/50"
+          className="overflow-hidden rounded-2xl border-t border-r border-l bg-white px-5 shadow-card data-[state=open]:border-brand/25 data-[state=open]:shadow-soft"
         >
           <AccordionTrigger className="py-4 text-left text-base font-semibold sm:text-lg">{item.q}</AccordionTrigger>
           <AccordionContent className="text-ink-soft">{item.a}</AccordionContent>

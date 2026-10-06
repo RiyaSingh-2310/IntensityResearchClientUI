@@ -20,16 +20,16 @@ export function ProcessJourney() {
     <section className="px-4 py-16 sm:px-6 lg:px-8">
       <AnimatedSection>
         <SectionHeading
-          eyebrow="The process"
-          title="Four steps to get started"
-          description="A clear path from creating your account to redeeming your points."
+          eyebrow="Simple Process"
+          title="Four Simple Steps to Success"
+          description="Start earning in minutes with a straightforward process designed for your success."
         />
       </AnimatedSection>
 
       <div className="relative mx-auto mt-14 max-w-6xl">
         <div className="pointer-events-none absolute top-7 right-[12%] left-[12%] hidden h-px bg-line lg:block" aria-hidden="true">
           <motion.span
-            className="absolute inset-y-0 left-0 origin-left bg-gradient-to-r from-brand to-signal"
+            className="absolute inset-y-0 left-0 origin-left bg-brand"
             style={{ height: 2, top: -0.5, width: '100%' }}
             initial={reduce ? { scaleX: 1 } : { scaleX: 0 }}
             whileInView={{ scaleX: 1 }}
@@ -51,30 +51,30 @@ export function ProcessJourney() {
                 transition={{ duration, delay: reduce ? 0 : index * 0.08, ease: easePremium }}
               >
                 <div className="mb-5 hidden justify-center lg:flex">
-                  <span className="relative z-10 grid size-14 place-items-center rounded-full border-4 border-paper bg-brand font-display text-sm font-semibold text-white shadow-glow">
+                  <span className="relative z-10 grid size-14 place-items-center rounded-full border-4 border-paper bg-brand font-display text-sm text-white shadow-soft">
                     {step.n}
                   </span>
                 </div>
                 <article
                   className={cn(
-                    'flex h-full flex-col rounded-2xl border border-line bg-surface p-6',
-                    'transition-[transform,border-color] duration-200 hover:border-brand-mid/50 motion-safe:hover:-translate-y-1',
+                    'flex h-full flex-col rounded-[1.6rem] border border-line bg-white p-6 shadow-card',
+                    'transition-transform duration-200 motion-safe:hover:-translate-y-1 motion-safe:hover:shadow-lift',
                   )}
                 >
                   <div className="flex items-start justify-between gap-3">
-                    <span className="grid size-12 place-items-center rounded-2xl border border-brand-mid/30 bg-brand-soft text-accent">
-                      <Icon className="size-5" aria-hidden="true" />
+                    <span className="grid size-12 place-items-center rounded-2xl bg-brand-soft text-brand">
+                      <Icon className="size-5" />
                     </span>
-                    <span className="grid size-9 place-items-center rounded-full bg-brand font-display text-xs font-semibold text-white lg:hidden">
+                    <span className="grid size-9 place-items-center rounded-full bg-brand font-display text-xs text-white lg:hidden">
                       {step.n}
                     </span>
                   </div>
-                  <h3 className="font-display mt-5 text-xl font-semibold text-strong">{step.title}</h3>
+                  <h3 className="font-display mt-5 text-2xl text-ink">{step.title}</h3>
                   <p className="mt-2 flex-1 text-sm leading-6 text-ink-soft">{step.copy}</p>
-                  <ul className="mt-5 space-y-2 rounded-xl border border-line bg-cream px-4 py-3">
+                  <ul className="mt-5 space-y-2 rounded-2xl bg-brand-soft/70 px-4 py-3">
                     {step.bullets.map((bullet) => (
                       <li key={bullet} className="flex items-start gap-2 text-sm text-ink-soft">
-                        <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-signal" aria-hidden="true" />
+                        <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-brand" />
                         {bullet}
                       </li>
                     ))}

@@ -11,7 +11,9 @@ export interface PaginatedResponse<T> {
   total: number
 }
 
-export type RewardCategory = 'cash' | 'gift-card' | 'digital'
+export type RewardCategory = 'cash' | 'gift-card' | 'digital' | 'charity'
+
+export type RewardAvailability = 'available' | 'coming-soon' | 'unavailable'
 
 export type RewardRequestStatus = 'pending' | 'approved' | 'rejected' | 'completed'
 

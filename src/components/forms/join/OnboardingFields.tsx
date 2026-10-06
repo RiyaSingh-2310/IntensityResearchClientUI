@@ -60,7 +60,7 @@ function toggleOption(selected: string[], option: FormOption) {
 }
 
 const optionClass =
-  'flex min-h-11 cursor-pointer items-start gap-3 rounded-xl border bg-cream px-3 py-2.5 text-sm leading-5 text-ink transition-colors hover:border-brand-mid/60 focus-within:border-brand-mid focus-within:ring-2 focus-within:ring-brand/25'
+  'flex min-h-11 cursor-pointer items-start gap-3 rounded-xl border bg-white px-3 py-2.5 text-sm leading-5 text-ink transition-colors hover:border-brand/50 focus-within:ring-2 focus-within:ring-brand/20'
 
 export function OnboardingFields({
   questions,
@@ -117,7 +117,7 @@ export function OnboardingFields({
                 {question.options.map((option) => {
                   const checked = selected.includes(option.value)
                   return (
-                    <label key={option.value} className={cn(optionClass, checked ? 'border-brand-mid bg-brand-soft' : 'border-line')}>
+                    <label key={option.value} className={cn(optionClass, checked ? 'border-brand bg-brand-soft/50' : 'border-line')}>
                       <Checkbox
                         checked={checked}
                         aria-invalid={Boolean(error) || undefined}
@@ -138,7 +138,7 @@ export function OnboardingFields({
               {question.options.map((option) => {
                 const checked = value === option.value
                 return (
-                  <label key={option.value} className={cn(optionClass, checked ? 'border-brand-mid bg-brand-soft' : 'border-line')}>
+                  <label key={option.value} className={cn(optionClass, 'rounded-2xl', checked ? 'border-brand bg-brand-soft/50' : 'border-line')}>
                     <input
                       type="radio"
                       className="mt-0.5 size-4 shrink-0 accent-brand"

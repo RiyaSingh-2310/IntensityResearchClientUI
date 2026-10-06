@@ -14,7 +14,7 @@ export function PasswordField({ className, ...props }: PasswordFieldProps) {
       <Input {...props} type={visible ? 'text' : 'password'} className={cn('pr-11', className)} />
       <button
         type="button"
-        className="absolute top-1/2 right-3 -translate-y-1/2 text-muted hover:text-ink"
+        className="absolute top-1/2 right-0.5 grid size-9 -translate-y-1/2 place-items-center rounded-full text-muted hover:text-ink"
         onClick={() => setVisible((value) => !value)}
         aria-label={visible ? 'Hide password' : 'Show password'}
       >

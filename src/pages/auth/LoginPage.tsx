@@ -2,16 +2,15 @@ import { Check } from 'lucide-react'
 import { AnimatePresence, motion } from 'motion/react'
 import { Link, Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { ForgotPasswordForm } from '@/components/auth/ForgotPasswordForm'
-import { Logo } from '@/components/shared/Logo'
 import { LoginForm } from '@/components/auth/LoginForm'
 import { paths, returnPath } from '@/config/paths'
 import { useAuth } from '@/hooks/useAuth'
 import { useMotionConfig } from '@/lib/motion'
 
 const welcomePoints = [
-  'See your assigned surveys and their status',
-  'Track your points and payout requests',
-  'Update your profile at any time',
+  'Track your points and rewards',
+  'Review reward requests and history',
+  'Update your profile anytime',
 ]
 
 export function LoginPage() {
@@ -32,36 +31,35 @@ export function LoginPage() {
   }
 
   return (
-    <div className="hero-grid px-4 py-10 sm:px-6 lg:px-8">
+    <div className="px-4 py-10 sm:px-6 lg:px-8">
       <motion.div
-        className="mx-auto grid max-w-5xl overflow-hidden rounded-3xl border border-line bg-surface shadow-lift lg:grid-cols-[0.92fr_1.08fr]"
+        className="mx-auto grid max-w-5xl overflow-hidden rounded-3xl border border-line bg-white shadow-lift lg:grid-cols-[0.92fr_1.08fr]"
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration }}
       >
-        <aside className="surface-gradient relative hidden overflow-hidden border-r border-line p-8 text-strong lg:flex lg:flex-col lg:justify-between lg:p-10">
-          <Logo size="md" />
-          <div className="relative my-10">
-            <p className="font-display text-4xl leading-tight font-semibold">Welcome back</p>
-            <p className="mt-4 max-w-sm text-sm leading-7 text-ink-soft">
-              Log in to see your surveys, points, and payout requests in one place.
+        <aside className="relative hidden overflow-hidden bg-brand-deep p-8 text-white lg:flex lg:flex-col lg:justify-center lg:p-10">
+          <div className="relative">
+            <p className="font-display text-4xl leading-tight">Welcome Back</p>
+            <p className="mt-4 max-w-sm text-sm leading-7 text-white/80">
+              Log in to access your points, rewards, and member account in one place.
             </p>
             <ul className="mt-8 space-y-3">
               {welcomePoints.map((item) => (
-                <li key={item} className="flex items-center gap-3 text-sm text-ink">
-                  <span className="grid size-7 place-items-center rounded-full border border-signal/40 bg-signal-soft text-signal">
-                    <Check className="size-4" aria-hidden="true" />
+                <li key={item} className="flex items-center gap-3 text-sm text-white/90">
+                  <span className="grid size-7 place-items-center rounded-full bg-white/15">
+                    <Check className="size-4" />
                   </span>
                   {item}
                 </li>
               ))}
             </ul>
           </div>
-          <p className="relative text-xs text-muted">Secure member access</p>
         </aside>
         <div className="p-6 sm:p-10">
           <div className="mb-8 lg:hidden">
-            <Logo size="sm" />
+            <p className="font-display text-3xl text-ink">Welcome Back</p>
+            <p className="mt-2 text-sm text-ink-soft">Log in to access your points, rewards, and member account.</p>
           </div>
           <AnimatePresence mode="wait">
             <motion.div
@@ -73,8 +71,8 @@ export function LoginPage() {
             >
               {view === 'forgot' ? (
                 <>
-                  <h1 id="member-login-title" className="font-display text-3xl font-semibold text-strong sm:text-4xl">
-                    {resetToken ? 'Reset your password' : 'Forgot your password?'}
+                  <h1 id="member-login-title" className="font-display text-3xl text-ink sm:text-4xl">
+                    {resetToken ? 'Reset Password' : 'Forgot Password?'}
                   </h1>
                   <p className="mt-2 text-sm text-ink-soft">
                     {resetToken ? 'Choose a new password for your member account.' : 'Enter the email on your member account.'}
@@ -85,10 +83,10 @@ export function LoginPage() {
                 </>
               ) : (
                 <>
-                  <h1 id="member-login-title" className="font-display text-3xl font-semibold text-strong sm:text-4xl">
-                    Member login
+                  <h1 id="member-login-title" className="font-display text-3xl text-ink sm:text-4xl">
+                    Member Login
                   </h1>
-                  <p className="mt-2 text-sm text-ink-soft">Enter your account details to continue.</p>
+                  <p className="mt-2 text-sm text-ink-soft">Please enter your account details below.</p>
                   <div className="mt-8">
                     <LoginForm
                       redirectTo={from}
@@ -97,8 +95,8 @@ export function LoginPage() {
                   </div>
                   <p className="mt-6 text-center text-sm text-ink-soft">
                     Don’t have an account?{' '}
-                    <Link to="/join" className="font-medium text-accent hover:underline">
-                      Join the panel
+                    <Link to="/join" className="font-medium text-brand hover:underline">
+                      Join Now
                     </Link>
                   </p>
                 </>

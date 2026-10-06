@@ -1,9 +1,10 @@
 import { Send } from 'lucide-react'
-import { useRef, useState, type FormEvent } from 'react'
+import { useRef, useState, type ChangeEvent, type FormEvent } from 'react'
 import { Button } from '@/components/ui/button'
 import { Field } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
+import { omitKey } from '@/lib/utils'
 import { EMAIL_PATTERN, NAME_MAX_LENGTH, NAME_PATTERN } from '@/lib/validation'
 import { ApiRequestError } from '@/services/errors'
 import { contactService } from '@/services/contact.service'
@@ -27,6 +28,13 @@ export function ContactForm({
   const [sentTo, setSentTo] = useState('')
   const [formError, setFormError] = useState('')
   const inFlight = useRef(false)
+
+  const edit =
+    (key: string, setter: (value: string) => void) =>
+    (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      setter(event.target.value)
+      setErrors((current) => omitKey(current, key))
+    }
 
   function splitName(full: string) {
     const parts = full.trim().split(/\s+/).filter(Boolean)
@@ -74,7 +82,7 @@ export function ContactForm({
     } else if (!names.lastName) {
       next.name = 'Please enter your first and last name.'
     }
-    if (!email.trim() || !EMAIL_PATTERN.test(email)) next.email = 'Enter a valid email address.'
+    if (!EMAIL_PATTERN.test(email.trim())) next.email = 'Enter a valid email address.'
     if (!subject.trim()) next.subject = 'Please add a subject.'
     if (!message.trim()) next.message = 'Tell us how we can help.'
     setErrors(next)
@@ -131,24 +139,24 @@ export function ContactForm({
       ) : null}
       {layout === 'full' ? (
         <div className="grid gap-5 sm:grid-cols-2">
-          <Field label="First name" htmlFor={`${idPrefix}-first`} required error={errors.firstName}>
+          <Field label="First Name" htmlFor={`${idPrefix}-first`} required error={errors.firstName}>
             <Input
               id={`${idPrefix}-first`}
               autoComplete="given-name"
               maxLength={NAME_MAX_LENGTH}
               placeholder="Enter your first name"
               value={firstName}
-              onChange={(event) => setFirstName(event.target.value)}
+              onChange={edit('firstName', setFirstName)}
             />
           </Field>
-          <Field label="Last name" htmlFor={`${idPrefix}-last`} required error={errors.lastName}>
+          <Field label="Last Name" htmlFor={`${idPrefix}-last`} required error={errors.lastName}>
             <Input
               id={`${idPrefix}-last`}
               autoComplete="family-name"
               maxLength={NAME_MAX_LENGTH}
               placeholder="Enter your last name"
               value={lastName}
-              onChange={(event) => setLastName(event.target.value)}
+              onChange={edit('lastName', setLastName)}
             />
           </Field>
         </div>
@@ -160,7 +168,7 @@ export function ContactForm({
               autoComplete="name"
               placeholder="Your full name"
               value={name}
-              onChange={(event) => setName(event.target.value)}
+              onChange={edit('name', setName)}
             />
           </Field>
           <Field label="Email" htmlFor={`${idPrefix}-email`} required error={errors.email}>
@@ -170,20 +178,20 @@ export function ContactForm({
               autoComplete="email"
               placeholder="your.email@example.com"
               value={email}
-              onChange={(event) => setEmail(event.target.value)}
+              onChange={edit('email', setEmail)}
             />
           </Field>
         </div>
       )}
       {layout === 'full' ? (
-        <Field label="Email address" htmlFor={`${idPrefix}-email`} required error={errors.email}>
+        <Field label="Email Address" htmlFor={`${idPrefix}-email`} required error={errors.email}>
           <Input
             id={`${idPrefix}-email`}
             type="email"
             autoComplete="email"
             placeholder="Enter your email"
             value={email}
-            onChange={(event) => setEmail(event.target.value)}
+            onChange={edit('email', setEmail)}
           />
         </Field>
       ) : null}
@@ -193,7 +201,7 @@ export function ContactForm({
           autoComplete="off"
           placeholder="What’s this about?"
           value={subject}
-          onChange={(event) => setSubject(event.target.value)}
+          onChange={edit('subject', setSubject)}
         />
       </Field>
       <Field label="Message" htmlFor={`${idPrefix}-message`} required error={errors.message}>
@@ -205,7 +213,7 @@ export function ContactForm({
               : 'Please describe your question or issue in detail...'
           }
           value={message}
-          onChange={(event) => setMessage(event.target.value)}
+          onChange={edit('message', setMessage)}
         />
       </Field>
       <Button type="submit" className="w-full" disabled={submitting}>
@@ -214,7 +222,7 @@ export function ContactForm({
         ) : (
           <>
             <Send />
-            Send message
+            Send Message
           </>
         )}
       </Button>

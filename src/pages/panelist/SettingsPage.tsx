@@ -24,7 +24,7 @@ import {
   type AnswerValues,
   type FormQuestion,
 } from '@/lib/profileQuestions'
-import { formatDate, initials, mediaUrl } from '@/lib/utils'
+import { formatDate, initials, mediaUrl, omitKey } from '@/lib/utils'
 import { PHONE_MAX_DIGITS, validateNewPassword, validatePhone } from '@/lib/validation'
 import { authService } from '@/services/auth.service'
 import { onboardingService } from '@/services/onboarding.service'
@@ -196,8 +196,8 @@ export function SettingsPage() {
     <div>
       <section className="hero-grid px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
         <div className="mx-auto max-w-3xl">
-          <p className="text-xs font-semibold tracking-[0.18em] text-accent uppercase">Your account</p>
-          <h1 className="font-display mt-3 text-4xl font-semibold text-ink sm:text-5xl">Profile & settings</h1>
+          <p className="text-xs font-semibold tracking-[0.18em] text-brand uppercase">Your account</p>
+          <h1 className="font-display mt-3 text-4xl text-ink sm:text-5xl">Settings</h1>
           <p className="mt-4 max-w-2xl text-base leading-8 text-ink-soft">
             Update your personal details, keep your research profile current, and manage how you sign in.
           </p>
@@ -234,7 +234,7 @@ export function SettingsPage() {
                   {data.user.onboarding_completed_at ? 'Profile complete' : 'Profile incomplete'}
                 </Badge>
               </div>
-              <label className="mt-3 inline-flex cursor-pointer text-sm font-medium text-accent hover:underline">
+              <label className="mt-3 inline-flex cursor-pointer text-sm font-medium text-brand hover:underline">
                 {uploading ? 'Uploading…' : 'Upload photo'}
                 <input
                   type="file"
@@ -252,7 +252,11 @@ export function SettingsPage() {
               autoComplete="name"
               maxLength={100}
               value={form.name}
-              onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
+              onChange={(event) => {
+                const name = event.target.value
+                setForm((current) => ({ ...current, name }))
+                setPersonalErrors((current) => omitKey(current, 'name'))
+              }}
             />
           </Field>
           <Field label="Email" htmlFor="settings-email" hint="Email cannot be changed here.">
@@ -265,7 +269,10 @@ export function SettingsPage() {
               number={form.phone}
               maxDigits={PHONE_MAX_DIGITS}
               onCountryChange={(value) => setForm((current) => ({ ...current, phoneCountry: value }))}
-              onNumberChange={(value) => setForm((current) => ({ ...current, phone: value }))}
+              onNumberChange={(value) => {
+                setForm((current) => ({ ...current, phone: value }))
+                setPersonalErrors((current) => omitKey(current, 'phone'))
+              }}
             />
           </Field>
           <div className="flex justify-end">
@@ -333,7 +340,7 @@ function Section({
   return (
     <Card id={id} className="scroll-mt-24">
       <CardContent className="pt-6">
-        <h2 className="font-display text-xl font-semibold text-ink sm:text-2xl">{title}</h2>
+        <h2 className="font-display text-2xl text-ink">{title}</h2>
         {description ? <p className="mt-2 text-sm leading-6 text-ink-soft">{description}</p> : null}
         <div className="mt-5 grid gap-4">{children}</div>
       </CardContent>
@@ -359,6 +366,7 @@ function ChangePasswordForm() {
   const [success, setSuccess] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const inFlight = useRef(false)
+  const clearError = (key: string) => setErrors((current) => omitKey(current, key))
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault()
@@ -403,7 +411,7 @@ function ChangePasswordForm() {
   return (
     <Section
       id="change-password"
-      title="Change password"
+      title="Change Password"
       description="Enter your current password, then choose a new one with at least 8 characters, including a letter and a number. Forgot your current password? Log out and use “Forgot password” on the login page."
     >
       <form className="grid gap-4" onSubmit={onSubmit} noValidate>
@@ -422,7 +430,10 @@ function ChangePasswordForm() {
             id="current-password"
             autoComplete="current-password"
             value={currentPassword}
-            onChange={(event) => setCurrentPassword(event.target.value)}
+            onChange={(event) => {
+              setCurrentPassword(event.target.value)
+              clearError('currentPassword')
+            }}
           />
         </Field>
         <Field label="New password" htmlFor="new-password" required error={errors.password}>
@@ -430,7 +441,10 @@ function ChangePasswordForm() {
             id="new-password"
             autoComplete="new-password"
             value={password}
-            onChange={(event) => setPassword(event.target.value)}
+            onChange={(event) => {
+              setPassword(event.target.value)
+              clearError('password')
+            }}
           />
         </Field>
         <PasswordStrength password={password} />
@@ -439,7 +453,10 @@ function ChangePasswordForm() {
             id="confirm-new-password"
             autoComplete="new-password"
             value={confirmPassword}
-            onChange={(event) => setConfirmPassword(event.target.value)}
+            onChange={(event) => {
+              setConfirmPassword(event.target.value)
+              clearError('confirmPassword')
+            }}
           />
         </Field>
         <div className="flex justify-end">

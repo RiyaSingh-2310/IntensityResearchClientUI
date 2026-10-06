@@ -1,16 +1,22 @@
-import type { RewardCategory, RewardRequestStatus, TransactionType } from './common'
+import type { LucideIcon } from 'lucide-react'
+import type { RewardAvailability, RewardCategory, RewardRequestStatus, TransactionType } from './common'
 
-/** A payout method enabled by the API, shaped for display. */
 export interface RewardOption {
-  /** API payment method id. */
   id: string
-  /** Display name (e.g. "UPI" for the API's "UIP"). */
   name: string
-  /** Raw API name, sent back as `payment_method` when redeeming. */
-  apiValue: string
   category: RewardCategory
   description: string
   pointsRequired: number
+  delivery: string
+  available: boolean
+  availability?: RewardAvailability
+  popular?: boolean
+  accent: string
+  logoLabel: string
+  estimatedValueLabel: string
+  icon?: LucideIcon
+  paymentMethod?: string
+  image?: string
 }
 
 export interface RedeemRewardPayload {
@@ -50,4 +56,11 @@ export interface RewardHistoryQuery {
   type?: string
   from?: string
   to?: string
+}
+
+export interface PointsGuide {
+  headline: string
+  body: string
+  minimumRedemption: number
+  notes: string[]
 }

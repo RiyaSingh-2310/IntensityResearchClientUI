@@ -7,6 +7,7 @@ import { Field } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { returnPath } from '@/config/paths'
 import { useAuth } from '@/hooks/useAuth'
+import { omitKey } from '@/lib/utils'
 import { EMAIL_PATTERN } from '@/lib/validation'
 import { ApiRequestError } from '@/services/errors'
 import { authService, SESSION_REJECTED } from '@/services/auth.service'
@@ -50,6 +51,8 @@ export function LoginForm({
   const [submitting, setSubmitting] = useState(false)
   const inFlight = useRef(false)
 
+  const clearError = (key: string) => setErrors((current) => omitKey(current, key))
+
   async function onSubmit(event: FormEvent) {
     event.preventDefault()
     if (inFlight.current) return
@@ -81,7 +84,7 @@ export function LoginForm({
         setNeedsVerification(true)
         setFormError(requestError?.message || 'Please verify your email before logging in.')
       } else if (requestError?.status === 401) {
-        setFormError(requestError.message || 'Invalid email or password.')
+        setFormError(requestError.message || 'Those details did not match our records. Please try again.')
       } else {
         setFormError(requestError?.message ?? 'Unable to sign in. Please try again.')
       }
@@ -101,7 +104,7 @@ export function LoginForm({
         </p>
       ) : null}
       {sessionExpired && !formError ? (
-        <p className="rounded-xl bg-signal-soft px-4 py-3 text-sm text-signal" role="status">
+        <p className="rounded-xl bg-accent-soft px-4 py-3 text-sm text-accent-deep" role="status">
           Your session has expired. Please sign in again.
         </p>
       ) : null}
@@ -111,7 +114,7 @@ export function LoginForm({
         </p>
       ) : null}
       {needsVerification ? (
-        <div className="rounded-xl bg-brand-soft/60 px-4 py-3 text-sm text-accent">
+        <div className="rounded-xl bg-brand-soft/60 px-4 py-3 text-sm text-brand-deep">
           <p>
             Your account is not active yet. Check your inbox for the activation email, or resend it below. Login stays
             blocked until the backend verifies your email.
@@ -147,14 +150,17 @@ export function LoginForm({
           ) : null}
         </div>
       ) : null}
-      <Field label="Email address" htmlFor={`${idPrefix}-email`} required error={errors.email}>
+      <Field label="Email Address" htmlFor={`${idPrefix}-email`} required error={errors.email}>
         <Input
           id={`${idPrefix}-email`}
           type="email"
           autoComplete="email"
           placeholder="Enter your email"
           value={email}
-          onChange={(event) => setEmail(event.target.value)}
+          onChange={(event) => {
+            setEmail(event.target.value)
+            clearError('email')
+          }}
         />
       </Field>
       <Field label="Password" htmlFor={`${idPrefix}-password`} required error={errors.password}>
@@ -163,7 +169,10 @@ export function LoginForm({
           autoComplete="current-password"
           placeholder="Enter your password"
           value={password}
-          onChange={(event) => setPassword(event.target.value)}
+          onChange={(event) => {
+            setPassword(event.target.value)
+            clearError('password')
+          }}
         />
       </Field>
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -171,12 +180,12 @@ export function LoginForm({
           <Checkbox checked={rememberMe} onCheckedChange={(value) => setRememberMe(value === true)} />
           Remember me
         </label>
-        <button type="button" className="text-sm font-medium text-accent hover:underline" onClick={onForgot}>
-          Forgot password?
+        <button type="button" className="text-sm font-medium text-brand hover:underline" onClick={onForgot}>
+          Forgot Password?
         </button>
       </div>
       <Button type="submit" className="w-full" disabled={submitting}>
-        {submitting ? 'Signing in…' : 'Log in'}
+        {submitting ? 'Signing in…' : 'Login'}
       </Button>
     </form>
   )

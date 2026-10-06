@@ -1,14 +1,14 @@
 export const helpHero = {
-  titleLead: 'How can we',
-  titleAccent: 'help you?',
+  titleLead: 'How Can We',
+  titleAccent: 'Help You?',
   description: 'Find answers about your account, assigned surveys, points, and payouts.',
-  searchPlaceholder: 'Search help topics and FAQs…',
+  searchPlaceholder: 'Search for help articles, FAQs, or topics...',
 }
 
 export const helpCategories = [
   {
     id: 'getting-started',
-    title: 'Getting started',
+    title: 'Getting Started',
     icon: 'smartphone',
     articles: [
       {
@@ -35,7 +35,7 @@ export const helpCategories = [
   },
   {
     id: 'surveys',
-    title: 'Surveys & points',
+    title: 'Surveys & Earning',
     icon: 'trending',
     articles: [
       {
@@ -62,7 +62,7 @@ export const helpCategories = [
   },
   {
     id: 'rewards',
-    title: 'Rewards & payouts',
+    title: 'Rewards & Redemption',
     icon: 'gem',
     articles: [
       {
@@ -89,7 +89,7 @@ export const helpCategories = [
   },
   {
     id: 'account',
-    title: 'Account & security',
+    title: 'Account & Security',
     icon: 'settings',
     articles: [
       {

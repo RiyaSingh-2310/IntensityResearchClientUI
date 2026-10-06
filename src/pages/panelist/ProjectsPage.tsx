@@ -59,13 +59,13 @@ export function ProjectsPage() {
 
   return (
     <div>
-      <section className="hero-grid px-4 py-12 sm:px-6 lg:px-8 lg:py-14">
+      <section className="hero-grid px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
         <div className="mx-auto max-w-6xl">
-          <p className="text-xs font-semibold tracking-[0.18em] text-accent uppercase">Assigned to you</p>
-          <h1 className="font-display mt-3 text-4xl font-semibold text-strong sm:text-5xl">My surveys</h1>
+          <p className="text-xs font-semibold tracking-[0.18em] text-brand uppercase">Assigned to You</p>
+          <h1 className="font-display mt-3 text-4xl text-ink sm:text-5xl">Surveys</h1>
           <p className="mt-4 max-w-2xl text-base leading-8 text-ink-soft">
             Surveys assigned to your account appear here. Ongoing surveys are listed first — select{' '}
-            <span className="font-semibold text-ink">Continue survey</span> to open one in a new tab.
+            <span className="font-medium text-ink">Continue Survey</span> to open one in a new tab.
           </p>
           {data ? (
             <dl className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -75,9 +75,9 @@ export function ProjectsPage() {
                 { label: 'Completed', value: counts.complete },
                 { label: 'Points from completed', value: earned },
               ].map((stat) => (
-                <div key={stat.label} className="rounded-2xl border border-line bg-surface/80 px-4 py-4">
+                <div key={stat.label} className="rounded-2xl border border-line bg-white px-4 py-4 shadow-soft">
                   <dt className="text-xs text-muted">{stat.label}</dt>
-                  <dd className="font-display mt-1 text-2xl font-semibold text-strong">{formatNumber(stat.value)}</dd>
+                  <dd className="font-display mt-1 text-2xl text-ink">{formatNumber(stat.value)}</dd>
                 </div>
               ))}
             </dl>
@@ -91,8 +91,8 @@ export function ProjectsPage() {
 
         {data ? (
           <>
-            <div className="no-scrollbar -mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
-              <div role="tablist" aria-label="Filter surveys by status" className="inline-flex min-w-max gap-1 rounded-2xl border border-line bg-surface p-1">
+            <div className="no-scrollbar relative -mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+              <div role="tablist" aria-label="Filter surveys by status" className="inline-flex min-w-max gap-1 rounded-full border border-line bg-white p-1 shadow-soft">
                 {surveyFilters.map((item, index) => {
                   const selected = filter === item.id
                   return (
@@ -110,19 +110,19 @@ export function ProjectsPage() {
                       onClick={() => setFilter(item.id)}
                       onKeyDown={(event) => onTabKeyDown(event, index)}
                       className={cn(
-                        'inline-flex h-10 items-center gap-2 rounded-xl px-3.5 text-sm font-medium whitespace-nowrap transition-colors',
-                        selected ? 'bg-brand text-white shadow-glow' : 'text-ink-soft hover:bg-raised hover:text-ink',
+                        'inline-flex items-center gap-2 rounded-full px-3 py-2 text-xs whitespace-nowrap transition-all duration-200 sm:px-4 sm:text-sm',
+                        selected ? 'bg-ink font-medium text-cream shadow-soft' : 'text-ink-soft hover:text-ink',
                       )}
                     >
                       {item.label}
                       <span
                         className={cn(
-                          'min-w-6 rounded-full px-1.5 py-0.5 text-center text-xs font-semibold',
-                          selected ? 'bg-white/20 text-white' : 'bg-raised text-ink-soft',
+                          'min-w-6 rounded-full px-1.5 py-0.5 text-center text-xs font-medium',
+                          selected ? 'bg-cream/20 text-cream' : 'bg-cream text-ink-soft',
                         )}
                       >
                         {formatNumber(counts[item.id])}
-                        <span className="sr-only"> surveys</span>
+                        <span className="sr-only">{counts[item.id] === 1 ? ' survey' : ' surveys'}</span>
                       </span>
                     </button>
                   )
@@ -134,7 +134,9 @@ export function ProjectsPage() {
               {visible.length === 0 ? (
                 <EmptyState title={emptyCopy[filter].title} description={emptyCopy[filter].description} />
               ) : (
-                visible.map((project) => <AssignedSurveyCard key={project.id} project={project} />)
+                visible.map((project) => (
+                  <AssignedSurveyCard key={project.id} project={project} latest={project.id === items[0]?.id} />
+                ))
               )}
             </div>
           </>

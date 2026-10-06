@@ -16,9 +16,9 @@ import { useMotionConfig, easePremium } from '@/lib/motion'
 import { cn } from '@/lib/utils'
 
 const tabs = [
-  { id: 'browse', label: 'Browse help', short: 'Help', icon: BookOpen },
+  { id: 'browse', label: 'Browse Help', short: 'Help', icon: BookOpen },
   { id: 'faq', label: 'FAQ', short: 'FAQ', icon: CircleHelp },
-  { id: 'contact', label: 'Contact support', short: 'Contact', icon: MessageCircle },
+  { id: 'contact', label: 'Contact Support', short: 'Contact', icon: MessageCircle },
 ] as const
 
 type HelpTab = (typeof tabs)[number]['id']
@@ -58,7 +58,7 @@ export function HelpPage() {
     <div>
       <PageHero
         beforeTitle={
-          <div className="mx-auto mb-2 grid size-12 place-items-center rounded-2xl bg-surface text-accent shadow-soft">
+          <div className="mx-auto mb-2 grid size-12 place-items-center rounded-2xl bg-white text-brand shadow-soft">
             <CircleHelp className="size-6" />
           </div>
         }
@@ -66,13 +66,13 @@ export function HelpPage() {
           <>
             {helpHero.titleLead}
             <br />
-            <span className="text-accent">{helpHero.titleAccent}</span>
+            <span className="text-accent-deep">{helpHero.titleAccent}</span>
           </>
         }
         description={helpHero.description}
       >
         <form
-          className="mx-auto mt-8 flex w-full max-w-xl items-center overflow-hidden rounded-full border border-line bg-surface shadow-soft focus-within:border-brand focus-within:ring-4 focus-within:ring-brand/10"
+          className="mx-auto mt-8 flex w-full max-w-xl items-center overflow-hidden rounded-full border border-line bg-white shadow-soft focus-within:border-brand focus-within:ring-4 focus-within:ring-brand/10"
           onSubmit={(event) => {
             event.preventDefault()
             setQuery(draft)
@@ -111,7 +111,7 @@ export function HelpPage() {
         <div className="relative z-10 mx-auto -mt-6 max-w-4xl">
           <Tabs.List
             aria-label="Help sections"
-            className="grid grid-cols-3 gap-1 rounded-[1.4rem] border border-line bg-surface p-1.5 shadow-card"
+            className="grid grid-cols-3 gap-1 rounded-[1.4rem] border border-line bg-white p-1.5 shadow-card"
           >
             {tabs.map((item) => {
               const Icon = item.icon
@@ -154,8 +154,10 @@ export function HelpPage() {
             transition={{ duration, ease: easePremium }}
             className="mx-auto max-w-3xl"
           >
-            <h2 className="text-center font-display text-3xl font-semibold text-strong sm:text-4xl">Frequently asked questions</h2>
-            <p className="mt-2 text-center text-sm text-ink-soft">Quick answers to the questions panelists ask most.</p>
+            <h2 className="text-center font-display text-3xl text-ink sm:text-4xl">Frequently Asked Questions</h2>
+            <p className="mt-2 text-center text-sm text-ink-soft">
+              Quick answers to the most common questions from our community.
+            </p>
             <FaqAccordion className="mt-10" items={faqItems} />
             {faqItems.length === 0 ? (
               <p className="mt-8 text-center text-sm text-ink-soft">No FAQs match that search.</p>
@@ -168,7 +170,7 @@ export function HelpPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration, ease: easePremium }}
           >
-            <h2 className="text-center font-display text-3xl font-semibold text-strong sm:text-4xl">{helpContactIntro.title}</h2>
+            <h2 className="text-center font-display text-3xl text-ink sm:text-4xl">{helpContactIntro.title}</h2>
             <p className="mx-auto mt-2 max-w-xl text-center text-sm text-ink-soft">{helpContactIntro.description}</p>
             <div className="mx-auto mt-10 grid max-w-3xl gap-5 md:grid-cols-2">
               {helpMethods.map((method) => (
@@ -184,9 +186,11 @@ export function HelpPage() {
                 />
               ))}
             </div>
-            <div className="mx-auto mt-12 max-w-3xl rounded-2xl border border-line bg-surface p-6 shadow-card sm:p-8">
-              <h3 className="text-center font-display text-2xl font-semibold text-strong">Send us a message</h3>
-              <p className="mt-2 text-center text-sm text-ink-soft">Fill out the form and we’ll reply by email.</p>
+            <div className="mx-auto mt-12 rounded-[1.7rem] border border-line bg-white p-6 shadow-card sm:p-8">
+              <h3 className="text-center font-display text-2xl text-ink">Send us a Message</h3>
+              <p className="mt-2 text-center text-sm text-ink-soft">
+                Fill out the form below and we’ll get back to you as soon as possible.
+              </p>
               <div className="mt-8">
                 <ContactForm layout="simple" idPrefix="help-contact" />
               </div>

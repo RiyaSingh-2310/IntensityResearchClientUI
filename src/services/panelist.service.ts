@@ -1,7 +1,9 @@
 import type { RewardBalance, RewardRequestRecord, RewardTransactionRecord } from '@/types/api'
 import type { ActivityItem, DashboardSummary, ProfilePageData } from '@/types/panelist'
 import type { AssignedProject } from '@/types/project'
+import { resolveRequestMethod } from '@/content/rewardMethods'
 import { mapTransaction, paymentMethodName } from '@/lib/apiMap'
+import { displayPaymentMethodName } from '@/lib/paymentMethods'
 import { asNumber, parseApiDate } from '@/lib/utils'
 import { authService } from './auth.service'
 import { onboardingService } from './onboarding.service'
@@ -13,6 +15,11 @@ export interface DashboardResponse {
   summary: DashboardSummary
   activity: ActivityItem[]
   latestProjects: AssignedProject[]
+}
+
+function requestRewardName(item: RewardRequestRecord) {
+  const method = paymentMethodName(item)
+  return resolveRequestMethod(method, item.remark)?.name ?? displayPaymentMethodName(method)
 }
 
 function requestTitle(status: string) {
@@ -44,7 +51,7 @@ export function activityFromData(
   const fromRequests: ActivityItem[] = requests.map((item) => ({
     id: `req-${item.id}`,
     title: requestTitle(item.status),
-    detail: `${paymentMethodName(item)} · ${asNumber(item.reward_points)} points`,
+    detail: `${requestRewardName(item)} · ${asNumber(item.reward_points)} points`,
     occurredAt: item.created_at,
     kind: 'reward',
   }))
@@ -90,7 +97,7 @@ export function composeDashboard(
   const now = new Date()
   const redeemedPoints = transactions
     .filter((item) => item.transaction_type === 'debit')
-    .reduce((sum, item) => sum + asNumber(item.reward_points), 0)
+    .reduce((sum, item) => sum + Math.abs(asNumber(item.reward_points)), 0)
   const pointsThisMonth = transactions
     .filter((item) => {
       if (item.transaction_type !== 'credit') return false

@@ -8,40 +8,20 @@ export const brand = {
 } as const
 
 export const joinIncentive = {
-  label: 'Free to join',
-  headline: 'Join the Intensity Research panel',
-  body: 'Share your perspective in research studies and earn points you can redeem for rewards.',
+  label: 'Free to Join',
+  headline: 'Join the Research Panel',
+  body: 'Share your opinions. Participate in research. Earn rewards.',
   disclaimer:
     'Study availability and reward points vary by profile, eligibility, and individual study requirements. Rewards are not guaranteed earnings.',
 }
 
-export const joinHero = {
-  /** Rendered uppercase via CSS. */
-  eyebrow: 'Intensity Research panel',
-  title: 'Join Intensity Research',
-  body: 'Create your free account, complete a short profile, and receive research invitations matched to you.',
-  highlights: [
-    { title: 'Matched studies', copy: 'Based on your profile' },
-    { title: 'Your schedule', copy: 'Take part when it suits you' },
-    { title: 'Reward points', copy: 'For eligible completed studies' },
-  ],
-  disclaimer:
-    'Survey availability and reward points vary based on your profile, eligibility, and individual study requirements.',
-} as const
-
-export const joinWhyJoin = [
-  { title: 'Earn reward points', copy: 'Receive points for eligible completed studies and redeem them once you reach the minimum payout.' },
-  {
-    title: 'Studies that fit you',
-    copy: 'Your profile answers help us invite you to research that is relevant to your life and interests.',
-  },
-  {
-    title: 'Privacy first',
-    copy: 'Your information is used to match you with research and is never sold as a mailing list.',
-  },
+export const joinHighlights = [
+  { value: 'Free', label: 'To join and take part', hint: 'No sign-up or membership fees' },
+  { value: '5–15 min', label: 'Typical study length', hint: 'Varies by study' },
+  { value: 'Points', label: 'For completed studies', hint: 'Credited after approval' },
 ] as const
 
-export const joinResearchOpportunities = [
+export const joinTopics = [
   'Product & service feedback',
   'Brand & advertising research',
   'Shopping & lifestyle studies',
@@ -50,11 +30,46 @@ export const joinResearchOpportunities = [
   'Concept & idea testing',
 ] as const
 
+export const joinBonuses = [
+  'Studies matched to the profile you share with us',
+  'Points tracked live in your member dashboard',
+  'Payout requests you can follow from pending to completed',
+  'Product and concept testing opportunities',
+] as const
+
+export const joinHero = {
+  /** Rendered uppercase via CSS. */
+  eyebrow: 'Intensity Research Community',
+  title: 'Join Intensity Research',
+  body: 'Share your opinions, experiences, and expertise through research studies and receive rewards for eligible participation.',
+  highlights: [
+    { title: 'Relevant Studies', copy: 'Matched to your profile' },
+    { title: 'Flexible Participation', copy: 'Take part when it suits you' },
+    { title: 'Earn Rewards', copy: 'For eligible completed studies' },
+  ],
+  disclaimer:
+    'Survey availability and reward points vary based on your profile, eligibility, and individual study requirements.',
+} as const
+
+export const joinWhyJoin = [
+  { title: 'Earn Rewards', copy: 'Receive points for eligible completed studies and redeem them once you reach the minimum payout.' },
+  {
+    title: 'Relevant Research Opportunities',
+    copy: 'Your profile answers help us invite you to research that is relevant to your life and interests.',
+  },
+  {
+    title: 'Privacy Protected',
+    copy: 'Your information is used to match you with research and is never sold as a mailing list.',
+  },
+] as const
+
+export const joinResearchOpportunities = joinTopics
+
 export const joinMemberTrust = [
-  { title: 'Secure & confidential', copy: 'Your personal information is protected and handled with care.' },
-  { title: 'Relevant invitations', copy: 'Invitations are matched to the profile you share with us.' },
-  { title: 'Transparent rewards', copy: 'Points are credited for eligible completed studies and shown in your history.' },
-  { title: 'Always voluntary', copy: 'You decide which studies to take part in.' },
+  { title: 'Secure & Confidential', copy: 'Your personal information is protected and handled with care.' },
+  { title: 'Relevant Opportunities', copy: 'Invitations are matched to the profile you share with us.' },
+  { title: 'Fair Rewards', copy: 'Points are credited for eligible completed studies and shown in your history.' },
+  { title: 'Voluntary Participation', copy: 'You decide which studies to take part in.' },
 ] as const
 
 export const joinSidebarDisclaimer =
@@ -67,14 +82,15 @@ export const publicNav = [
   { to: '/how-it-works', label: 'How It Works' },
   { to: '/rewards', label: 'Rewards' },
   { to: '/help', label: 'Help' },
-  { to: '/about', label: 'About' },
+  { to: '/about', label: 'About Us' },
   { to: '/contact', label: 'Contact' },
 ] as const
 
 export const memberNav = [
   { to: '/dashboard', label: 'Dashboard', end: true },
-  { to: '/surveys', label: 'Surveys' },
-  { to: '/redeem-rewards', label: 'Redeem' },
-  { to: '/history', label: 'History' },
-  { to: '/help', label: 'Help' },
+  { to: '/', label: 'Home', end: true },
+  { to: '/rewards', label: 'Rewards' },
+  { to: '/redeem-rewards', label: 'Redeem Rewards' },
+  { to: '/history', label: 'Reward History' },
+  { to: '/contact', label: 'Contact' },
 ] as const

@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "catalog:sync": "node scripts/sync-tremendous-catalog.mjs",
+    "prebuild": "node scripts/sync-tremendous-catalog.mjs",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview"

@@ -14,7 +14,7 @@ export function HowItWorksPage() {
         eyebrow={howItWorksHero.eyebrow}
         title={
           <>
-            {howItWorksHero.titleLead} <span className="text-accent">{howItWorksHero.titleAccent}</span>
+            {howItWorksHero.titleLead} <span className="text-accent-deep">{howItWorksHero.titleAccent}</span>
           </>
         }
         description={howItWorksHero.description}
@@ -25,7 +25,7 @@ export function HowItWorksPage() {
       <section className="px-4 py-16 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-3xl">
           <SectionHeading
-            title="Frequently asked questions"
+            title="Frequently Asked Questions"
             description="A few things people ask before they join."
           />
           <FaqAccordion items={howItWorksFaqs} className="mt-10" />

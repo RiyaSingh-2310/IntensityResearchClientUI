@@ -16,17 +16,17 @@ export function DialogContent({
 }: ComponentProps<typeof DialogPrimitive.Content> & { title: string; description?: string; children: ReactNode }) {
   return (
     <DialogPrimitive.Portal>
-      <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-[#0a1a36]/45 backdrop-blur-sm data-[state=open]:animate-in" />
+      <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-ink/40 backdrop-blur-sm data-[state=open]:animate-in" />
       <DialogPrimitive.Content
         className={cn(
-          'fixed top-1/2 left-1/2 z-50 max-h-[92svh] w-[calc(100%-1.25rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-3xl border border-line bg-surface p-4 shadow-lift sm:p-6',
+          'fixed top-1/2 left-1/2 z-50 max-h-[92svh] w-[calc(100%-1.25rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-3xl border border-line bg-cream p-4 shadow-lift sm:p-6',
           className,
         )}
         {...props}
       >
         <div className="mb-5 flex items-start justify-between gap-4">
           <div>
-            <DialogPrimitive.Title className="font-display text-xl font-semibold text-strong sm:text-2xl">{title}</DialogPrimitive.Title>
+            <DialogPrimitive.Title className="font-display text-2xl text-ink">{title}</DialogPrimitive.Title>
             {description ? (
               <DialogPrimitive.Description className="mt-1 text-sm text-muted">
                 {description}
@@ -35,7 +35,7 @@ export function DialogContent({
               <DialogPrimitive.Description className="sr-only">{title}</DialogPrimitive.Description>
             )}
           </div>
-          <DialogPrimitive.Close className="grid size-10 shrink-0 place-items-center rounded-full border border-line bg-raised text-ink transition-colors hover:border-brand-mid/60 hover:bg-brand-soft">
+          <DialogPrimitive.Close className="grid size-10 shrink-0 place-items-center rounded-full border border-line bg-white text-ink shadow-soft hover:bg-brand-soft hover:text-brand-deep">
             <X className="size-5 text-ink" strokeWidth={2.25} />
             <span className="sr-only">Close</span>
           </DialogPrimitive.Close>

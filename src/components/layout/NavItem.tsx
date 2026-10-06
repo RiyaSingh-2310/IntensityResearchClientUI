@@ -21,16 +21,9 @@ export function NavItem({
       onClick={onClick}
       className={({ isActive }) =>
         cn(
-          'relative rounded-lg px-3 text-sm text-ink-soft transition-colors duration-200',
-          mobile ? 'block py-3 hover:bg-surface hover:text-ink' : 'py-2 hover:bg-surface hover:text-ink',
-          isActive
-            ? cn(
-                'bg-raised font-semibold text-strong',
-                mobile
-                  ? 'border-l-2 border-signal pl-[10px]'
-                  : 'after:absolute after:inset-x-3 after:-bottom-[1px] after:h-0.5 after:rounded-full after:bg-signal',
-              )
-            : 'font-medium',
+          'rounded-full px-3 text-sm text-ink-soft transition-all duration-200',
+          mobile ? 'block py-3' : 'py-2 lg:motion-safe:hover:-translate-y-0.5 lg:hover:bg-white lg:hover:text-ink lg:hover:shadow-soft',
+          isActive ? 'bg-white font-bold text-ink shadow-soft' : 'font-medium',
         )
       }
     >

@@ -23,20 +23,20 @@ export function CtaSection({
   return (
     <section className={cn('px-4 py-16 sm:px-6 lg:px-8', className)}>
       <motion.div
-        className="surface-gradient relative mx-auto max-w-5xl overflow-hidden rounded-[2rem] border border-brand-mid/30 px-6 py-14 text-center text-strong shadow-glow sm:px-10"
+        className="mx-auto max-w-5xl overflow-hidden rounded-[2rem] bg-brand px-6 py-14 text-center text-white sm:px-10"
         initial={reduce ? false : { opacity: 0, y: 18 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, amount: 0.4 }}
         transition={{ duration, ease: easePremium }}
       >
-        <h2 className="font-display relative text-3xl font-semibold text-balance sm:text-4xl lg:text-5xl">{title}</h2>
-        <p className="relative mx-auto mt-4 max-w-2xl text-sm leading-7 text-ink-soft sm:text-base">{description}</p>
-        <div className="relative mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-          <Button asChild size="lg">
+        <h2 className="font-display text-3xl text-balance sm:text-4xl lg:text-5xl">{title}</h2>
+        <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-white/80 sm:text-base">{description}</p>
+        <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+          <Button asChild size="lg" variant="accent">
             <Link to={primary.to}>{primary.label}</Link>
           </Button>
           {secondary ? (
-            <Button asChild size="lg" variant="outline">
+            <Button asChild size="lg" variant="outline" className="border-white/30 bg-white text-ink hover:bg-cream">
               <Link to={secondary.to}>{secondary.label}</Link>
             </Button>
           ) : null}

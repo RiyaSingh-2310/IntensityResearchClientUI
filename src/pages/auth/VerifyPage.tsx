@@ -1,11 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { CheckCircle2, LoaderCircle, MailX } from 'lucide-react'
-import { Logo } from '@/components/shared/Logo'
 import { Button } from '@/components/ui/button'
 import { Field } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
-import { brand } from '@/config/brand'
 import { paths } from '@/config/paths'
 import { readActivationToken } from '@/lib/activationToken'
 import { EMAIL_PATTERN } from '@/lib/validation'
@@ -92,12 +90,12 @@ export function VerifyPage() {
     status === 'loading'
       ? {
           title: 'Verifying your email…',
-          body: `Please wait while we activate your ${brand.name} account.`,
+          body: 'Please wait while we activate your Intensity Research account.',
         }
       : status === 'success'
         ? {
-            title: 'Email verified',
-            body: `Your email has been verified. You can now log in to your ${brand.name} account.`,
+            title: 'Email Verified Successfully',
+            body: 'Your email has been verified successfully. You can now log in to your Intensity Research account.',
           }
         : status === 'already'
           ? {
@@ -117,30 +115,27 @@ export function VerifyPage() {
                 }
               : status === 'missing'
                 ? {
-                    title: 'Verification link invalid',
+                    title: 'Verification Link Invalid',
                     body: 'This page needs a valid verification link from your email.',
                   }
                 : {
-                    title: 'Verification link invalid',
+                    title: 'Verification Link Invalid',
                     body: detail || 'This verification link is invalid or no longer available.',
                   }
 
   const showLogin = status !== 'loading'
-  const loginLabel = status === 'success' || status === 'already' ? 'Go to login' : 'Back to login'
+  const loginLabel = status === 'success' || status === 'already' ? 'Go to Login' : 'Back to Login'
   const showResend = status === 'expired' || status === 'invalid' || status === 'missing'
 
   return (
-    <div className="hero-grid px-4 py-16 sm:px-6">
-      <div className="mx-auto max-w-lg rounded-3xl border border-line bg-surface p-8 text-center shadow-lift sm:p-10">
-        <div className="mb-8 flex justify-center">
-          <Logo size="md" />
-        </div>
+    <div className="px-4 py-16 sm:px-6">
+      <div className="mx-auto max-w-lg rounded-3xl border border-line bg-white p-8 text-center shadow-card sm:p-10">
         <div
           className={`mx-auto grid size-14 place-items-center rounded-full ${
             status === 'success' || status === 'already'
               ? 'bg-success-soft text-success'
               : status === 'loading'
-                ? 'bg-brand-soft text-accent'
+                ? 'bg-brand-soft text-brand'
                 : 'bg-danger-soft text-danger'
           }`}
         >
@@ -152,7 +147,7 @@ export function VerifyPage() {
             <MailX className="size-7" aria-hidden="true" />
           )}
         </div>
-        <h1 className="font-display mt-5 text-3xl font-semibold text-strong">{copy.title}</h1>
+        <h1 className="font-display mt-5 text-3xl text-ink">{copy.title}</h1>
         <p className="mt-3 text-sm leading-6 text-ink-soft">{copy.body}</p>
         {status === 'error' ? (
           <Button
@@ -176,7 +171,7 @@ export function VerifyPage() {
               void resend()
             }}
           >
-            <Field label="Email address" htmlFor="resend-activation-email" required>
+            <Field label="Email Address" htmlFor="resend-activation-email" required>
               <Input
                 id="resend-activation-email"
                 type="email"
@@ -186,7 +181,7 @@ export function VerifyPage() {
               />
             </Field>
             {resendMessage ? (
-              <p className={`mt-2 text-sm ${resendState === 'error' ? 'text-danger' : 'text-accent'}`} role="status">
+              <p className={`mt-2 text-sm ${resendState === 'error' ? 'text-danger' : 'text-brand-deep'}`} role="status">
                 {resendMessage}
               </p>
             ) : null}

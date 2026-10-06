@@ -1,18 +1,22 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { RewardBenefits } from '@/components/rewards/RewardBenefits'
 import { RedeemDialog } from '@/components/rewards/RedeemDialog'
+import { RewardCategorySection } from '@/components/rewards/RewardCategorySection'
+import { RewardCountrySelect } from '@/components/rewards/RewardCountrySelect'
 import { EmptyState, ErrorState, LoadingSkeleton } from '@/components/shared/PageState'
 import { CtaSection } from '@/components/shared/CtaSection'
 import { FaqAccordion } from '@/components/shared/FaqAccordion'
 import { PageHero } from '@/components/shared/PageHero'
-import { RewardCard } from '@/components/shared/RewardCard'
 import { SectionHeading } from '@/components/shared/SectionHeading'
-import { Button } from '@/components/ui/button'
 import { paths } from '@/config/paths'
-import { rewardSteps, rewardsCta, rewardsFaqs, rewardsHero } from '@/content/rewards'
+import { countryName } from '@/content/countries'
+import { rewardMethodsForCountry } from '@/content/rewardMethods'
+import { rewardShowcase, rewardsCta, rewardsFaqs, rewardsHero } from '@/content/rewards'
 import { useAuth } from '@/hooks/useAuth'
 import { useAsync } from '@/hooks/useAsync'
+import { useRewardCountry } from '@/hooks/useRewardCountry'
+import { rewardOptionFromMethod } from '@/lib/rewards'
 import { formatNumber } from '@/lib/utils'
 import { rewardService } from '@/services/reward.service'
 import type { RewardOption } from '@/types/reward'
@@ -25,13 +29,19 @@ export function RewardsPage() {
   )
   const { data, error, reload } = catalog
   const loading = catalog.loading && !data
+  const [country, setCountry] = useRewardCountry()
   const [selected, setSelected] = useState<RewardOption | null>(null)
   const [message, setMessage] = useState('')
-  const items = data?.items ?? []
+  const redeemTo = user ? paths.rewards : paths.join
   const points = data?.balancePoint ?? 0
-  const held = data?.heldPoints ?? 0
-  const minimum = data?.minimumPayout ?? 0
-  const welcomePoints = data?.registrationRewardPoints ?? 0
+  const minimum = data?.guide.minimumRedemption ?? 0
+  const methods = useMemo(() => (data ? rewardMethodsForCountry(country, data.payout) : []), [country, data])
+  const items = methods.map((method) => rewardOptionFromMethod(method, minimum))
+  const recipientCountry = countryName(country) || country
+
+  const cash = items.filter((item) => item.category === 'cash')
+  const giftCards = items.filter((item) => item.category === 'gift-card' || item.category === 'digital')
+  const charity = items.filter((item) => item.category === 'charity')
 
   return (
     <div>
@@ -39,140 +49,147 @@ export function RewardsPage() {
         eyebrow={rewardsHero.eyebrow}
         title={
           <>
-            {rewardsHero.titleLead} <span className="text-accent">{rewardsHero.titleAccent}</span>
+            {rewardsHero.titleLead} <span className="text-accent-deep">{rewardsHero.titleAccent}</span>
           </>
         }
         description={rewardsHero.description}
       >
-        <ul className="mt-8 flex flex-wrap justify-center gap-2">
+        <div className="mt-8 flex flex-wrap justify-center gap-2">
           {rewardsHero.pills.map((pill) => (
-            <li key={pill} className="rounded-full border border-line bg-surface/80 px-4 py-2 text-sm text-ink-soft">
+            <span key={pill} className="rounded-full bg-white px-4 py-2 text-sm text-ink-soft shadow-soft">
               {pill}
-            </li>
+            </span>
           ))}
-        </ul>
+        </div>
       </PageHero>
 
       {user && !loading && !error ? (
-        <div className="mx-auto max-w-6xl px-4 pt-10 sm:px-6 lg:px-8">
-          <div className="flex flex-col gap-4 rounded-2xl border border-brand-mid/30 bg-brand-soft/60 px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-8">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col gap-3 rounded-[1.6rem] border border-brand/15 bg-brand-soft/50 px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-8">
             <div>
-              <p className="text-xs font-semibold tracking-[0.16em] text-accent uppercase">Available points</p>
-              <p className="font-display mt-1 text-3xl font-semibold text-strong">{formatNumber(points)}</p>
-              {held > 0 ? (
-                <p className="mt-1 text-xs text-ink-soft">{formatNumber(held)} points held by pending requests</p>
-              ) : null}
+              <p className="text-xs tracking-[0.16em] text-muted uppercase">Available points</p>
+              <p className="font-display mt-1 text-3xl text-ink">{formatNumber(points)}</p>
             </div>
-            <div className="flex flex-col gap-2 sm:flex-row">
-              <Button asChild>
-                <Link to={paths.redeemRewards}>Redeem points</Link>
-              </Button>
-              <Button asChild variant="outline">
-                <Link to={paths.history}>View history</Link>
-              </Button>
-            </div>
+            <p className="max-w-md text-sm leading-6 text-ink-soft">
+              Browse options here, then open{' '}
+              <Link to={paths.redeemRewards} className="font-medium text-brand hover:underline">
+                Redeem Rewards
+              </Link>{' '}
+              to submit a payout. Track status in Reward History.
+            </p>
           </div>
           {message ? (
-            <p className="mt-4 rounded-xl border border-success/30 bg-success-soft px-4 py-3 text-sm text-success" role="status">
+            <p className="mt-4 rounded-xl bg-success-soft px-4 py-3 text-sm text-success" role="status">
               {message}
             </p>
           ) : null}
         </div>
       ) : null}
 
-      <section className="mx-auto max-w-6xl px-4 py-14 sm:px-6 lg:px-8">
+      <section className="px-4 pt-12 sm:px-6 lg:px-8">
         <SectionHeading
-          eyebrow="Payout methods"
-          title="Ways to redeem your points"
-          description="These options come straight from the panel’s current payout settings."
+          title="Browse Reward Categories"
+          description="Popular rewards from the Tremendous catalog. Only options that can be delivered to your country are shown."
         />
-
-        {loading ? (
-          <div className="mt-10">
-            <LoadingSkeleton rows={3} />
-          </div>
-        ) : null}
-        {error ? (
-          <div className="mt-10">
-            <ErrorState message="Unable to load payout methods. Please try again." onRetry={reload} />
-          </div>
-        ) : null}
-
-        {!loading && !error ? (
-          items.length ? (
-            <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-              {items.map((reward) => (
-                <RewardCard
-                  key={reward.id}
-                  reward={reward}
-                  action={
-                    user ? (
-                      <Button type="button" className="w-full" onClick={() => setSelected(reward)}>
-                        Redeem with {reward.name}
-                      </Button>
-                    ) : (
-                      <Button asChild variant="outline" className="w-full">
-                        <Link to={paths.join}>Join to redeem</Link>
-                      </Button>
-                    )
-                  }
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="mt-10">
-              <EmptyState
-                title="No payout methods are enabled right now."
-                description="Payout methods will appear here as soon as they are enabled. Your points stay safely in your balance."
-              />
-            </div>
-          )
-        ) : null}
-
-        {!loading && !error && minimum > 0 ? (
-          <dl className="mt-10 grid gap-4 sm:grid-cols-2">
-            <div className="rounded-2xl border border-line bg-surface px-6 py-5">
-              <dt className="text-xs font-semibold tracking-[0.16em] text-muted uppercase">Minimum payout</dt>
-              <dd className="font-display mt-2 text-3xl font-semibold text-strong">{formatNumber(minimum)} points</dd>
-            </div>
-            <div className="rounded-2xl border border-line bg-surface px-6 py-5">
-              <dt className="text-xs font-semibold tracking-[0.16em] text-muted uppercase">
-                {welcomePoints > 0 ? 'Welcome points' : 'Payout methods'}
-              </dt>
-              <dd className="font-display mt-2 text-3xl font-semibold text-strong">
-                {welcomePoints > 0 ? `${formatNumber(welcomePoints)} points` : formatNumber(items.length)}
-              </dd>
-              {welcomePoints > 0 ? (
-                <p className="mt-1 text-xs text-ink-soft">Credited according to the panel’s registration settings.</p>
-              ) : null}
-            </div>
-          </dl>
-        ) : null}
-      </section>
-
-      <section className="border-y border-line bg-cream/60 px-4 py-14 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-6xl">
-          <SectionHeading eyebrow="How redemption works" title="From points to payout in three steps" />
-          <ol className="mt-10 grid gap-5 md:grid-cols-3">
-            {rewardSteps.map((step, index) => (
-              <li key={step.title} className="rounded-2xl border border-line bg-surface px-6 py-6">
-                <span className="font-display grid size-9 place-items-center rounded-full border border-signal/40 bg-signal-soft text-sm font-semibold text-signal">
-                  {index + 1}
-                </span>
-                <h3 className="font-display mt-4 text-lg font-semibold text-strong">{step.title}</h3>
-                <p className="mt-2 text-sm leading-7 text-ink-soft">{step.copy}</p>
-              </li>
-            ))}
-          </ol>
+        <div className="mx-auto mt-8 max-w-sm">
+          <label htmlFor="rewards-country" className="mb-2 block text-center text-sm text-ink-soft">
+            Showing rewards available in
+          </label>
+          <RewardCountrySelect id="rewards-country" value={country} onValueChange={setCountry} />
         </div>
       </section>
 
+      {loading ? (
+        <div className="mx-auto max-w-6xl px-4 py-10">
+          <LoadingSkeleton rows={4} />
+        </div>
+      ) : null}
+      {error ? (
+        <div className="mx-auto max-w-6xl px-4 py-10">
+          <ErrorState message="Unable to load rewards. Please try again." onRetry={reload} />
+        </div>
+      ) : null}
+
+      {!loading && !error ? (
+        <>
+          {cash.length === 0 && giftCards.length === 0 && charity.length === 0 ? (
+            <div className="mx-auto max-w-6xl px-4 py-10">
+              <EmptyState
+                title={`No rewards available in ${recipientCountry}`}
+                description="None of the panel’s reward options can be delivered to this country right now. Choose another country above, or check back later."
+              />
+            </div>
+          ) : null}
+          {cash.length ? (
+            <RewardCategorySection
+              title={rewardShowcase[0].title}
+              description={rewardShowcase[0].description}
+              rewards={cash}
+              redeemTo={redeemTo}
+              featuredId="paypal"
+              onRedeem={user ? setSelected : undefined}
+            />
+          ) : null}
+          {giftCards.length ? (
+            <RewardCategorySection
+              title={rewardShowcase[1].title}
+              description={rewardShowcase[1].description}
+              rewards={giftCards}
+              redeemTo={redeemTo}
+              onRedeem={user ? setSelected : undefined}
+            />
+          ) : null}
+          {charity.length ? (
+            <RewardCategorySection
+              title={rewardShowcase[2].title}
+              description={rewardShowcase[2].description}
+              rewards={charity}
+              redeemTo={redeemTo}
+              onRedeem={user ? setSelected : undefined}
+            />
+          ) : null}
+        </>
+      ) : null}
+
       <RewardBenefits />
 
-      <section className="px-4 py-14 sm:px-6 lg:px-8">
+      {data?.guide ? (
+        <section className="px-4 pb-8 sm:px-6 lg:px-8">
+          <div className="mx-auto grid max-w-6xl gap-4 rounded-[1.6rem] border border-brand/15 bg-brand-soft/50 px-6 py-8 sm:grid-cols-3 sm:px-8">
+            <div className="text-center">
+              <p className="font-display text-3xl text-brand">{formatNumber(data.guide.minimumRedemption)}</p>
+              <p className="mt-1 text-sm text-ink-soft">Minimum payout points</p>
+            </div>
+            <div className="text-center">
+              <p className="font-display text-3xl text-brand">{formatNumber(items.length)}</p>
+              <p className="mt-1 text-sm text-ink-soft">Options in {recipientCountry}</p>
+            </div>
+            <div className="text-center">
+              <p className="font-display text-3xl text-brand">0%</p>
+              <p className="mt-1 text-sm text-ink-soft">Member signup fees</p>
+            </div>
+          </div>
+          <p className="mx-auto mt-4 max-w-3xl text-center text-xs leading-5 text-muted">{data.guide.body}</p>
+        </section>
+      ) : null}
+
+      <section className="px-4 py-16 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-3xl">
-          <SectionHeading title="Rewards FAQ" description="Quick answers about earning and redeeming points." />
-          <FaqAccordion className="mt-10" items={rewardsFaqs} />
+          <SectionHeading
+            title="Frequently Asked Questions"
+            description="Everything you need to know about redeeming your rewards. Exact values still come from each reward option."
+          />
+          <FaqAccordion
+            className="mt-10"
+            items={rewardsFaqs.map((item) =>
+              item.q.includes('minimum') && data?.guide.minimumRedemption
+                ? {
+                    ...item,
+                    a: `You can request a payout once your available balance reaches ${formatNumber(data.guide.minimumRedemption)} points. The same minimum applies to every payout option.`,
+                  }
+                : item,
+            )}
+          />
         </div>
       </section>
 
@@ -184,12 +201,12 @@ export function RewardsPage() {
         }
         description={
           user
-            ? 'Your points stay on your member account. Redeem when you are ready, or head to your dashboard for new surveys.'
+            ? 'Your points stay on your member account. Redeem when you are ready, or return to your dashboard for activity and history.'
             : rewardsCta.description
         }
-        primary={user ? { to: paths.dashboard, label: 'Go to dashboard' } : { to: paths.join, label: rewardsCta.primary }}
+        primary={user ? { to: paths.dashboard, label: 'Go to Dashboard' } : { to: paths.join, label: rewardsCta.primary }}
         secondary={
-          user ? { to: paths.surveys, label: 'View my surveys' } : { to: paths.howItWorks, label: rewardsCta.secondary }
+          user ? { to: paths.history, label: 'View History' } : { to: paths.howItWorks, label: rewardsCta.secondary }
         }
       />
 
@@ -197,13 +214,13 @@ export function RewardsPage() {
         <RedeemDialog
           key={selected.id}
           reward={selected}
-          methods={items}
+          methods={methods}
           points={points}
-          heldPoints={held}
+          heldPoints={data?.heldPoints ?? 0}
           minimum={minimum}
           onClose={() => setSelected(null)}
           onSubmitted={(name) => {
-            setMessage(`Your ${name} request was submitted and is pending review.`)
+            setMessage(`${name} request submitted.`)
             reload()
           }}
         />

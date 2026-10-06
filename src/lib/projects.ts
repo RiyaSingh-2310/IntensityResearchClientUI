@@ -40,7 +40,7 @@ export function getProjectAction(project: AssignedProject) {
     return { disabled: true, label: 'Quota full' }
   }
   if (project.surveyUrl) {
-    return { disabled: false, label: 'Continue survey', href: project.surveyUrl }
+    return { disabled: false, label: 'Continue Survey', href: project.surveyUrl }
   }
   return { disabled: true, label: 'Link not available yet' }
 }

@@ -6,6 +6,14 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+/** Returns the record without `key`, or the same object when the key is absent (so state setters can bail out). */
+export function omitKey<T extends Record<string, unknown>>(record: T, key: string): T {
+  if (!(key in record)) return record
+  const rest = { ...record }
+  delete rest[key]
+  return rest
+}
+
 export function asNumber(value: unknown, fallback = 0) {
   const parsed = Number(value)
   return Number.isFinite(parsed) ? parsed : fallback

@@ -23,11 +23,11 @@ export function EmptyState({
   action?: ReactNode
 }) {
   return (
-    <div className="rounded-2xl border border-dashed border-line bg-surface/60 px-6 py-14 text-center">
-      <div className="mx-auto mb-4 grid size-12 place-items-center rounded-2xl border border-brand-mid/30 bg-brand-soft text-accent">
-        <Inbox className="size-5" aria-hidden="true" />
+    <div className="rounded-2xl border border-dashed border-line bg-white/70 px-6 py-14 text-center">
+      <div className="mx-auto mb-4 grid size-12 place-items-center rounded-2xl bg-brand-soft text-brand">
+        <Inbox className="size-5" />
       </div>
-      <h3 className="font-display text-xl font-semibold text-strong">{title}</h3>
+      <h3 className="font-display text-2xl text-ink">{title}</h3>
       {description ? <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-muted">{description}</p> : null}
       {action ? <div className="mt-5">{action}</div> : null}
     </div>
@@ -36,14 +36,14 @@ export function EmptyState({
 
 export function ErrorState({ message, onRetry }: { message: string; onRetry: () => void }) {
   return (
-    <div role="alert" className="rounded-2xl border border-danger/30 bg-danger-soft/60 px-6 py-12 text-center">
-      <div className="mx-auto mb-4 grid size-12 place-items-center rounded-2xl bg-surface text-danger">
-        <AlertCircle className="size-5" aria-hidden="true" />
+    <div className="rounded-2xl border border-danger/20 bg-danger-soft/60 px-6 py-12 text-center">
+      <div className="mx-auto mb-4 grid size-12 place-items-center rounded-2xl bg-white text-danger">
+        <AlertCircle className="size-5" />
       </div>
-      <h3 className="font-display text-xl font-semibold text-strong">Unable to load this section</h3>
+      <h3 className="font-display text-2xl text-ink">Unable to load this section</h3>
       <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-ink-soft">{message}</p>
       <Button className="mt-5" variant="outline" onClick={onRetry}>
-        <RefreshCw className="size-4" aria-hidden="true" />
+        <RefreshCw className="size-4" />
         Try again
       </Button>
     </div>

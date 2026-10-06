@@ -4,7 +4,6 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { NavItem } from '@/components/layout/NavItem'
 import { ProfileMenu } from '@/components/layout/ProfileMenu'
 import { Logo } from '@/components/shared/Logo'
-import { ThemeToggle } from '@/components/shared/ThemeToggle'
 import { Button } from '@/components/ui/button'
 import { memberNav, publicNav } from '@/config/brand'
 import { paths } from '@/config/paths'
@@ -104,7 +103,7 @@ export function PublicHeader() {
 
   return (
     <>
-      <header className="sticky top-0 z-40 border-b border-line/80 bg-surface/95 backdrop-blur-xl supports-[backdrop-filter]:bg-surface/88">
+      <header className="sticky top-0 z-40 border-b border-line/70 bg-cream/85 backdrop-blur-xl">
         <div className="mx-auto flex h-18 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
           <Logo />
           <nav className="hidden items-center gap-0.5 lg:flex" aria-label="Primary">
@@ -115,22 +114,21 @@ export function PublicHeader() {
             ))}
           </nav>
           <div className="flex items-center gap-2">
-            <ThemeToggle />
             {ready && user ? <ProfileMenu open={profileOpen} onOpenChange={setProfile} onNavigate={closeMobile} /> : null}
             {ready && !user ? (
               <div className="hidden items-center gap-2 lg:flex">
                 <Button variant="ghost" type="button" onClick={handleLogin}>
-                  Log in
+                  Login
                 </Button>
                 <Button type="button" onClick={handleJoin}>
-                  Join the panel
+                  Join Now
                 </Button>
               </div>
             ) : null}
             <button
               ref={toggleRef}
               type="button"
-              className="relative z-40 grid size-10 place-items-center rounded-xl border border-line bg-surface text-ink transition-colors hover:border-brand-mid/60 hover:bg-raised lg:hidden"
+              className="relative z-40 grid size-10 place-items-center rounded-full border border-line bg-white text-ink shadow-soft lg:hidden"
               onClick={toggleMobile}
               aria-expanded={mobileOpen}
               aria-controls="mobile-nav"
@@ -145,7 +143,7 @@ export function PublicHeader() {
             <div
               id="mobile-nav"
               ref={menuRef}
-              className="relative z-40 max-h-[calc(100svh-4.5rem)] overflow-y-auto border-t border-line bg-paper lg:hidden"
+              className="relative z-40 overflow-hidden border-t border-line bg-cream lg:hidden"
             >
               <div className="grid gap-1 px-4 py-4">
                 {nav.map((link) => (
@@ -162,10 +160,10 @@ export function PublicHeader() {
                 {ready && !user ? (
                   <div className="mt-3 grid grid-cols-2 gap-2">
                     <Button type="button" variant="outline" onClick={handleLogin}>
-                      Log in
+                      Login
                     </Button>
                     <Button type="button" onClick={handleJoin}>
-                      Join the panel
+                      Join Now
                     </Button>
                   </div>
                 ) : null}
@@ -179,7 +177,7 @@ export function PublicHeader() {
           type="button"
           aria-label="Close menu"
           tabIndex={-1}
-          className="fixed inset-0 z-30 cursor-default border-0 bg-[#0a1a36]/40 backdrop-blur-md lg:hidden"
+          className="fixed inset-0 z-30 cursor-default border-0 bg-ink/25 backdrop-blur-md lg:hidden"
           onClick={closeMobile}
         />
       ) : null}

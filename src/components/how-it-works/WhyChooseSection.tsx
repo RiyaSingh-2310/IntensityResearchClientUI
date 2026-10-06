@@ -16,7 +16,7 @@ export function WhyChooseSection() {
 
   return (
     <section className="px-4 py-16 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-6xl rounded-[2rem] border border-line bg-surface px-6 py-14 sm:px-10">
+      <div className="mx-auto max-w-6xl rounded-[2rem] border border-line bg-white px-6 py-14 shadow-card sm:px-10">
         <AnimatedSection>
           <SectionHeading title={whyChooseHowItWorks.title} description={whyChooseHowItWorks.description} />
         </AnimatedSection>
@@ -26,16 +26,16 @@ export function WhyChooseSection() {
             return (
               <motion.article
                 key={item.title}
-                className="rounded-2xl border border-line bg-cream px-6 py-8 text-center"
+                className="rounded-3xl border border-line bg-cream/70 px-6 py-8 text-center"
                 initial={reduce ? false : { opacity: 0, y: 16 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, amount: 0.4 }}
                 transition={{ duration, delay: reduce ? 0 : index * 0.07, ease: easePremium }}
               >
-                <span className="mx-auto grid size-14 place-items-center rounded-2xl border border-brand-mid/30 bg-brand-soft text-accent">
-                  <Icon className="size-6" aria-hidden="true" />
+                <span className="mx-auto grid size-14 place-items-center rounded-2xl bg-brand-soft text-brand">
+                  <Icon className="size-6" />
                 </span>
-                <h3 className="mt-5 font-display text-xl font-semibold text-strong">{item.title}</h3>
+                <h3 className="mt-5 font-display text-xl text-ink">{item.title}</h3>
                 <p className="mt-2 text-sm leading-6 text-ink-soft">{item.copy}</p>
               </motion.article>
             )

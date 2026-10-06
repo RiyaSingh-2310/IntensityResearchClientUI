@@ -152,7 +152,7 @@ const consentCardClass = 'rounded-2xl border border-line p-4'
 
 function PolicyLink({ to, children }: { to: string; children: ReactNode }) {
   return (
-    <Link to={to} target="_blank" rel="noopener noreferrer" className="font-medium text-accent underline-offset-2 hover:underline">
+    <Link to={to} target="_blank" rel="noopener noreferrer" className="font-medium text-brand underline-offset-2 hover:underline">
       {children}
     </Link>
   )
@@ -160,7 +160,7 @@ function PolicyLink({ to, children }: { to: string; children: ReactNode }) {
 
 export function PrivacyStep({ form, errors, update }: StepProps) {
   return (
-    <div className="mt-6 grid gap-5">
+    <div className="mt-6 grid gap-6">
       <ConsentGroup legend="Terms & Conditions" required error={errors.acceptTerms} errorId="acceptTerms-error" className={consentCardClass}>
         <ConsentCheckbox
           id="acceptTerms"

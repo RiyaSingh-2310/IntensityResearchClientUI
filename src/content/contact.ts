@@ -1,28 +1,28 @@
 import { brand } from '@/config/brand'
 
 export const contactHero = {
-  eyebrow: 'Contact',
-  titleLead: 'Get in touch',
-  titleAccent: 'with our panel team',
-  description: 'Questions about your account, a survey, or a payout request? Send us a message and the team will follow up by email.',
+  eyebrow: 'Contact Support',
+  titleLead: 'Get in Touch',
+  titleAccent: 'We’re Here to Help',
+  description: 'Questions about your account, a survey, or a payout request? Send us a message and the panel team will follow up by email.',
 }
 
 export const contactMethods = [
   {
     id: 'email',
-    title: 'Email',
+    title: 'Email Support',
     copy: 'Write to the panel team directly',
     detail: brand.email,
-    cta: 'Send email',
+    cta: 'Send Email',
     href: `mailto:${brand.email}`,
     icon: 'mail',
   },
   {
     id: 'help',
     title: 'Help Center',
-    copy: 'Guides and answers to common questions',
+    copy: 'Browse guides, FAQs, and answers',
     detail: 'Account, surveys, and rewards',
-    cta: 'Browse help',
+    cta: 'Browse Help',
     href: '/help',
     icon: 'help',
   },
@@ -31,7 +31,7 @@ export const contactMethods = [
     title: 'Website',
     copy: `Learn more about ${brand.name}`,
     detail: brand.websiteLabel,
-    cta: 'Visit website',
+    cta: 'Visit Website',
     href: brand.website,
     icon: 'globe',
   },
@@ -39,12 +39,12 @@ export const contactMethods = [
 
 export const quickHelpTopics = [
   {
-    title: 'Account',
+    title: 'Account Issues',
     copy: 'Signing in, email verification, password reset, and profile updates',
     icon: 'user',
   },
   {
-    title: 'Points & payouts',
+    title: 'Points & Rewards',
     copy: 'Missing points, payout requests, and redemption status',
     icon: 'gift',
   },
@@ -76,13 +76,13 @@ export const contactFaqs = [
   },
   {
     q: 'I can’t sign in to my account.',
-    a: 'Use “Forgot password” on the login page to reset your password. If you never received a verification email, you can request a new one from the login page.',
+    a: 'Use “Forgot Password” on the login page to reset your password. If you never received a verification email, you can request a new one from the login page.',
   },
 ]
 
 export const helpContactIntro = {
-  title: 'Contact the panel team',
-  description: 'Still need help? Reach out and we’ll get back to you by email.',
+  title: 'Contact Our Support Team',
+  description: 'Choose your preferred way to get in touch with us. We’re here to help!',
   emailCopy: 'Send us a detailed message.',
   emailMeta: brand.email,
   websiteCopy: `Learn more about ${brand.name}.`,
