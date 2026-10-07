@@ -1,3 +1,5 @@
+import uberCard from '@/assets/rewards/uber.svg'
+import uberEatsCard from '@/assets/rewards/uber-eats.svg'
 import { countryName } from '@/content/countries'
 import catalogData from '@/content/tremendousCatalog.json'
 import type { PaymentMethod, PublicSettings } from '@/types/api'
@@ -53,6 +55,19 @@ export interface PanelPayoutConfig {
   settings?: Partial<Pick<PublicSettings, 'paypal_enabled' | SettingFlag>> | null
 }
 
+/**
+ * Tremendous serves the same combined Uber | Uber Eats card for both products.
+ * Use distinct brand cards so each reward shows its own mark.
+ */
+const BRAND_CARD_IMAGES: Record<string, string> = {
+  uber: uberCard,
+  'uber-eats': uberEatsCard,
+}
+
+function catalogImage(option: CatalogOption, variant: CatalogVariant) {
+  return BRAND_CARD_IMAGES[option.key] ?? variant.image
+}
+
 function methodEnabled(option: CatalogOption, config: PanelPayoutConfig) {
   const value = option.paymentMethod.trim().toLowerCase()
   const listed = (config.methods ?? []).some((method) => method.name.trim().toLowerCase() === value)
@@ -69,7 +84,7 @@ function variantCountries(variant: CatalogVariant) {
 export const showcaseRewardMethods: RewardMethod[] = tremendousCatalog.options.map((option) => ({
   id: option.key,
   name: option.name,
-  image: option.variants[0].image,
+  image: catalogImage(option, option.variants[0]),
   apiValue: option.paymentMethod,
   category: option.category,
 }))
@@ -92,15 +107,19 @@ export function rewardMethodsForCountry(country: string, config: PanelPayoutConf
   for (const option of tremendousCatalog.options) {
     if (!methodEnabled(option, config)) continue
     let best: CatalogVariant | undefined
+    let display: CatalogVariant | undefined
     for (const variant of option.variants) {
       const offered = variant.offers.some((offer) => offer.countries.includes(country))
-      if (offered && (!best || variantCountries(variant) < variantCountries(best))) best = variant
+      if (!offered) continue
+      // Variants are popularity-sorted; the first offered one is the canonical brand card.
+      if (!display) display = variant
+      if (!best || variantCountries(variant) < variantCountries(best)) best = variant
     }
     if (!best) continue
     methods.push({
       id: option.key,
       name: best.name,
-      image: best.image,
+      image: catalogImage(option, display ?? best),
       apiValue: option.paymentMethod,
       category: option.category,
       countryCode: country,
@@ -137,7 +156,9 @@ export function resolveRequestMethod(paymentMethod?: string, remark?: string | n
         (item) => text.includes(item.productId.toLowerCase()) || text.startsWith(item.productName.toLowerCase()),
       )
       const base = showcaseRewardMethods.find((method) => method.id === option.key)
-      if (variant && base) return { ...base, name: variant.name, image: variant.image, productName: variant.productName }
+      if (variant && base) {
+        return { ...base, name: variant.name, image: catalogImage(option, variant), productName: variant.productName }
+      }
     }
     const byName = [...showcaseRewardMethods]
       .sort((a, b) => b.name.length - a.name.length)

@@ -27,7 +27,7 @@ export function RewardMethodMark({
   return (
     <span
       className={cn(
-        'inline-grid shrink-0 place-items-center overflow-hidden border border-line/70 bg-white shadow-soft',
+        'inline-grid shrink-0 place-items-center overflow-hidden border border-line/70 bg-white p-0.5 shadow-soft',
         sizeClass,
         className,
       )}
@@ -36,7 +36,7 @@ export function RewardMethodMark({
         <img
           src={method.image}
           alt=""
-          className="size-full object-cover"
+          className="size-full object-contain object-center"
           loading="lazy"
           decoding="async"
           referrerPolicy="no-referrer"
