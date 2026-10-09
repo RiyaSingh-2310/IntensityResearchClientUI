@@ -3,7 +3,7 @@
     "popularity": "https://www.tremendous.com/catalog/",
     "availability": "https://api.tremendous.com/catalog-file.csv"
   },
-  "syncedAt": "2026-10-06T12:54:12.474Z",
+  "syncedAt": "2026-10-09T12:23:18.514Z",
   "selection": {
     "maxOptions": 20,
     "international": "2+ currencies or 10+ countries",
@@ -306,7 +306,6 @@
                 "GT",
                 "HK",
                 "HN",
-                "HR",
                 "HU",
                 "ID",
                 "IL",
@@ -368,6 +367,7 @@
                 "FR",
                 "GF",
                 "GR",
+                "HR",
                 "IE",
                 "IT",
                 "LT",
@@ -1726,20 +1726,6 @@
           ]
         },
         {
-          "productId": "O6400M6LO7YR",
-          "productName": "Uber UK",
-          "name": "Uber",
-          "image": "https://api.tremendous.com/product_images/O6400M6LO7YR/card",
-          "offers": [
-            {
-              "currency": "GBP",
-              "countries": [
-                "GB"
-              ]
-            }
-          ]
-        },
-        {
           "productId": "OJDI0EP8QTUK",
           "productName": "Uber AUD",
           "name": "Uber",
@@ -2090,6 +2076,20 @@
               "currency": "EUR",
               "countries": [
                 "NL"
+              ]
+            }
+          ]
+        },
+        {
+          "productId": "HDKDRTQS78VD",
+          "productName": "Google Play",
+          "name": "Google Play",
+          "image": "https://api.tremendous.com/product_images/HDKDRTQS78VD/card",
+          "offers": [
+            {
+              "currency": "EUR",
+              "countries": [
+                "ES"
               ]
             }
           ]
