@@ -113,7 +113,7 @@ export function DashboardPage() {
           <div className="flex flex-col gap-3 rounded-2xl border border-accent/30 bg-accent-soft px-4 py-4 text-sm text-accent-deep sm:flex-row sm:items-center sm:justify-between sm:px-5">
             <p>Finish your profile so we can match you with the most relevant opportunities.</p>
             <Button asChild size="sm" variant="accent" className="w-full sm:w-auto">
-              <Link to={paths.settings}>Complete profile</Link>
+              <Link to={paths.profile}>Complete profile</Link>
             </Button>
           </div>
         ) : null}

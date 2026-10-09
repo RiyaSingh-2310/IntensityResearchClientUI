@@ -1,4 +1,5 @@
 import { Outlet } from 'react-router-dom'
+import { AdditionalProfilePrompt } from '@/components/profile/AdditionalProfilePrompt'
 import { PublicFooter } from './PublicFooter'
 import { PublicHeader } from './PublicHeader'
 
@@ -10,6 +11,7 @@ export function PublicLayout() {
         <Outlet />
       </main>
       <PublicFooter />
+      <AdditionalProfilePrompt />
     </div>
   )
 }

@@ -1,6 +1,7 @@
 import { createContext, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { composePhone } from '@/content/countries'
 import { takePendingOnboarding } from '@/lib/pendingOnboarding'
+import { ADDITIONAL_PROFILE_PROMPT_KEY } from '@/services/additionalProfile.service'
 import { authService } from '@/services/auth.service'
 import { onboardingService } from '@/services/onboarding.service'
 import { ApiRequestError, UNAUTHORIZED_EVENT } from '@/services/errors'
@@ -138,6 +139,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     } finally {
       clearToken()
+      sessionStorage.removeItem(ADDITIONAL_PROFILE_PROMPT_KEY)
       setConnectionError('')
       setUser(null)
     }

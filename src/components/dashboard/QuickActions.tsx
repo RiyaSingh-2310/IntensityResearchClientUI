@@ -9,7 +9,7 @@ const actions = [
   { to: paths.surveys, label: 'Assigned Surveys', copy: 'Open studies assigned to your account.', icon: ClipboardList },
   { to: paths.redeemRewards, label: 'Redeem Rewards', copy: 'Request a payout with your available points.', icon: Gift },
   { to: paths.history, label: 'Reward History', copy: 'See reward requests and points in one place.', icon: History },
-  { to: paths.settings, label: 'Manage Profile', copy: 'Keep your account details up to date.', icon: UserRound },
+  { to: paths.profile, label: 'Manage Profile', copy: 'Keep your account details up to date.', icon: UserRound },
 ]
 
 export function QuickActions() {

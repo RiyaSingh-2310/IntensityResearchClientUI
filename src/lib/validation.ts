@@ -1,4 +1,6 @@
 import { DEFAULT_PHONE_COUNTRY, findCountry } from '@/content/countries'
+import { questionsFor } from '@/content/questionnaires'
+import { validateConfiguredQuestions } from '@/components/forms/ConfiguredQuestions'
 import { profileSectionCopy, type ProfileSectionId } from '@/content/profileQuestions'
 import type { RegisterPayload } from '@/types/auth'
 import { validateQuestions, type ProfileSections } from './profileQuestions'
@@ -74,6 +76,14 @@ export function validatePhone(phoneCountry: string, phone: string) {
   return ''
 }
 
+function stringAnswers(answers: RegisterPayload['answers']) {
+  const next: Record<string, string> = {}
+  for (const [key, value] of Object.entries(answers)) {
+    if (typeof value === 'string') next[key] = value
+  }
+  return next
+}
+
 function validateAccount(form: RegisterPayload) {
   const errors: Record<string, string> = {}
   const firstName = form.firstName.trim()
@@ -103,6 +113,10 @@ export function validateRegisterStep(form: RegisterPayload, stepId: RegisterStep
     case 'account':
       return validateAccount(form)
     case 'demographics':
+      return {
+        ...validateQuestions(sections.demographics, form.answers),
+        ...validateConfiguredQuestions(questionsFor('about-you'), stringAnswers(form.answers)),
+      }
     case 'lifestyle':
     case 'preferences':
       return validateQuestions(sections[stepId], form.answers)

@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { findCountry } from '@/content/countries'
 import { PROFILE_SECTION_IDS, profileSectionCopy } from '@/content/profileQuestions'
+import { questionsFor, visibleQuestions } from '@/content/questionnaires'
 import { answerDisplay, type ProfileSections } from '@/lib/profileQuestions'
 import type { RegisterPayload } from '@/types/auth'
 
@@ -22,6 +23,24 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
   )
 }
 
+function stringMap(answers: RegisterPayload['answers']) {
+  const next: Record<string, string> = {}
+  for (const [key, value] of Object.entries(answers)) {
+    if (typeof value === 'string') next[key] = value
+  }
+  return next
+}
+
+function configuredDisplay(answers: RegisterPayload['answers'], key: string) {
+  const value = answers[key]
+  if (typeof value !== 'string' || !value) return ''
+  if (value === 'Other') {
+    const other = answers[`${key}__other`]
+    return typeof other === 'string' && other.trim() ? other : 'Other'
+  }
+  return value
+}
+
 const yesNo = (value: boolean) => (value ? 'Yes' : 'No')
 const agreed = (value: boolean) => (value ? 'Agreed' : 'Not agreed')
 
@@ -39,6 +58,7 @@ export function ReviewStep({
     <div className="mt-6 space-y-4">
       <p className="text-sm leading-6 text-ink-soft">
         Review your details before submitting. Use Back to edit any section. Your password is never shown here.
+        The new country, area, housing, children, and industry questions are shown here for review. The Intensity API does not store those answers yet, so they are not sent with your registration.
       </p>
       <Section title="Account Information">
         <Row label="First name" value={form.firstName} />
@@ -52,6 +72,11 @@ export function ReviewStep({
             {sections[id].map((question) => (
               <Row key={question.key} label={question.label} value={answerDisplay(question, form.answers[question.key])} />
             ))}
+            {id === 'demographics'
+              ? visibleQuestions(questionsFor('about-you'), stringMap(form.answers)).map((question) => (
+                  <Row key={question.key} label={question.label} value={configuredDisplay(form.answers, question.key)} />
+                ))
+              : null}
           </Section>
         ) : null,
       )}

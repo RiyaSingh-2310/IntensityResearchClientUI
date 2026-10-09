@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
-import { AnimatePresence, motion } from 'motion/react'
+import { motion } from 'motion/react'
 import { Lock, ShieldCheck, Sparkles, Gift } from 'lucide-react'
 import { Link, Navigate } from 'react-router-dom'
 import { JoinHero } from '@/components/forms/join/JoinHero'
 import { JoinSidebar } from '@/components/forms/join/JoinSidebar'
+import { ConfiguredQuestions, isOtherOption } from '@/components/forms/ConfiguredQuestions'
 import { OnboardingFields } from '@/components/forms/join/OnboardingFields'
 import { RegistrationProgress } from '@/components/forms/join/RegistrationProgress'
 import { RegistrationSuccess } from '@/components/forms/join/RegistrationSuccess'
@@ -13,6 +14,7 @@ import { EmptyState, ErrorState, LoadingSkeleton } from '@/components/shared/Pag
 import { Button } from '@/components/ui/button'
 import { joinIncentive, joinTrust } from '@/config/brand'
 import { PROFILE_SECTION_IDS, type ProfileSectionId } from '@/content/profileQuestions'
+import { questionsFor } from '@/content/questionnaires'
 import { useAuth } from '@/hooks/useAuth'
 import { useAsync } from '@/hooks/useAsync'
 import { savePendingOnboarding } from '@/lib/pendingOnboarding'
@@ -99,10 +101,11 @@ export function JoinPage() {
   }
 
   function updateAnswer(key: string, value: AnswerValue) {
-    setForm((currentForm) => ({
-      ...currentForm,
-      answers: { ...currentForm.answers, [key]: value },
-    }))
+    setForm((currentForm) => {
+      const answers = { ...currentForm.answers, [key]: value }
+      if (typeof value === 'string' && !key.endsWith('__other') && !isOtherOption(value)) delete answers[`${key}__other`]
+      return { ...currentForm, answers }
+    })
   }
 
   function goToStep(index: number) {
@@ -245,14 +248,12 @@ export function JoinPage() {
                     </button>
                   </div>
                 ) : null}
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={current.id}
-                    initial={{ opacity: 0, x: 12 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -12 }}
-                    transition={{ duration }}
-                  >
+                <motion.div
+                  key={current.id}
+                  initial={false}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration }}
+                >
                     {current.id === 'review' ? (
                       <ReviewStep form={form} sections={sections} />
                     ) : current.id === 'account' ? (
@@ -260,15 +261,28 @@ export function JoinPage() {
                     ) : current.id === 'privacy' ? (
                       <PrivacyStep form={form} errors={shownErrors} update={update} />
                     ) : (
-                      <OnboardingFields
-                        questions={sections[current.id]}
-                        values={form.answers}
-                        errors={shownErrors}
-                        onChange={updateAnswer}
-                      />
+                      <>
+                        <OnboardingFields
+                          questions={sections[current.id]}
+                          values={form.answers}
+                          errors={shownErrors}
+                          onChange={updateAnswer}
+                        />
+                        {current.id === 'demographics' ? (
+                          <div className="mt-6">
+                            <ConfiguredQuestions
+                              questions={questionsFor('about-you')}
+                              answers={Object.fromEntries(
+                                Object.entries(form.answers).filter((entry): entry is [string, string] => typeof entry[1] === 'string'),
+                              )}
+                              errors={shownErrors}
+                              onChange={updateAnswer}
+                            />
+                          </div>
+                        ) : null}
+                      </>
                     )}
-                  </motion.div>
-                </AnimatePresence>
+                </motion.div>
               </div>
               <div className="mt-8 flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <Button

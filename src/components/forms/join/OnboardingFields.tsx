@@ -67,11 +67,13 @@ export function OnboardingFields({
   values,
   errors,
   onChange,
+  onBlur,
 }: {
   questions: FormQuestion[]
   values: AnswerValues
   errors: Record<string, string>
   onChange: (key: string, value: AnswerValue) => void
+  onBlur?: (key: string) => void
 }) {
   return (
     <div className="mt-6 grid gap-6">
@@ -88,6 +90,7 @@ export function OnboardingFields({
                 maxLength={question.maxLength}
                 aria-required={question.required || undefined}
                 value={typeof value === 'string' ? value : ''}
+                onBlur={() => onBlur?.(question.key)}
                 onChange={(event) => onChange(question.key, event.target.value)}
               />
             </Field>
@@ -103,6 +106,7 @@ export function OnboardingFields({
                 placeholder="Select an option"
                 options={question.options}
                 aria-required={question.required || undefined}
+                onBlur={() => onBlur?.(question.key)}
                 onChange={(event) => onChange(question.key, event.target.value)}
               />
             </Field>

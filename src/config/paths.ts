@@ -15,7 +15,9 @@ export const paths = {
   verifyEmail: '/verify-email',
   dashboard: '/dashboard',
   history: '/history',
+  profile: '/profile',
   settings: '/settings',
+  additionalProfile: '/additional-profile',
   surveys: '/surveys',
 } as const
 
@@ -31,6 +33,6 @@ export const legacyPanelistRedirects: Record<string, string> = {
   '/panelist/redeem-rewards': paths.redeemRewards,
   '/panelist/reward-requests': paths.history,
   '/panelist/reward-history': paths.history,
-  '/panelist/profile': paths.settings,
+  '/panelist/profile': paths.profile,
   '/panelist/projects': paths.surveys,
 }

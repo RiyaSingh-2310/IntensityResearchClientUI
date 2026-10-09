@@ -9,6 +9,7 @@ interface PhoneInputProps {
   number: string
   onCountryChange: (code: string) => void
   onNumberChange: (value: string) => void
+  onBlur?: () => void
   maxDigits?: number
   placeholder?: string
   'aria-invalid'?: boolean
@@ -21,6 +22,7 @@ export function PhoneInput({
   number,
   onCountryChange,
   onNumberChange,
+  onBlur,
   maxDigits = 15,
   placeholder = 'Enter mobile number',
   ...aria
@@ -62,6 +64,7 @@ export function PhoneInput({
         integer
         maxDigits={maxDigits}
         value={number}
+        onBlur={onBlur}
         onValueChange={onNumberChange}
         className="min-w-0 flex-1"
         {...aria}
