@@ -1,34 +1,37 @@
-import type { AdditionalProfileKind, QuestionnaireAnswers } from '@/content/questionnaires'
+import type { AdditionalProfileKind } from '@/content/questionnaires'
 import {
+  extractAnswerRows,
+  parseAnswerRows,
+  parseProfileQuestions,
+  parseProfileSummaries,
+  readCreatedAt,
+  readProfileId,
+  type AdditionalAnswerMap,
+  type AdditionalProfileAnswerInput,
+  type ProfileQuestionSet,
+} from '@/lib/additionalProfileForm'
+import {
+  markAdditionalProfilesHydrated,
   missingSessionProfiles,
   persistAdditionalProfile,
   replaceAdditionalProfiles,
+  sessionProfileRecord,
   sessionProfileRecords,
   type StoredAdditionalProfile,
 } from '@/lib/additionalProfileSession'
 import { ApiRequestError } from './errors'
 import { apiRequest } from './http'
 
-/**
- * Intensity's published API (https://intensityresearch.com/intensityapi/docs/) has
- * /questions, /dropdowns, and /onboarding/answers for the primary profile only.
- * It has no additional-profile create, list, or update endpoints.
- * Paths stay blank until that contract exists. Until then, profiles are saved
- * for the signed-in account in this browser, in the order they were created.
- */
 /** Dismisses the post-login prompt for the current browser session only. Cleared on logout. */
 export const ADDITIONAL_PROFILE_PROMPT_KEY = 'ir.additional-profile.prompt-dismissed'
 
-export const additionalProfileEndpoints = {
-  state: '',
-  create: '',
-  update: '',
-  view: '',
-} as const
+const questionCache = new Map<AdditionalProfileKind, ProfileQuestionSet>()
+let stateRequest: Promise<AdditionalProfileState> | null = null
 
 export interface AdditionalProfileRecord {
+  id: number
   kind: AdditionalProfileKind
-  answers: QuestionnaireAnswers
+  answers: AdditionalAnswerMap
   createdAt: string
 }
 
@@ -37,86 +40,108 @@ export interface AdditionalProfileState {
   creatableKinds: AdditionalProfileKind[]
 }
 
-function localState(): AdditionalProfileState {
+function toRecord(record: StoredAdditionalProfile): AdditionalProfileRecord {
+  return { id: record.id, kind: record.kind, answers: record.answers, createdAt: record.createdAt }
+}
+
+function remember(record: AdditionalProfileRecord, mode: 'create' | 'update') {
+  try {
+    return toRecord(persistAdditionalProfile(record, mode))
+  } catch (error) {
+    if (error instanceof ApiRequestError) throw error
+    const message = error instanceof Error ? error.message : 'Your profile could not be saved. Please try again.'
+    throw new ApiRequestError({ message })
+  }
+}
+
+async function loadState(): Promise<AdditionalProfileState> {
+  const listed = await apiRequest<unknown>('/additional-profiles')
+  const summaries = parseProfileSummaries(listed)
+  const records = await Promise.all(
+    summaries.map(async (summary) => {
+      const detail = await apiRequest<unknown>(`/additional-profiles/${summary.kind}/${summary.id}`)
+      const answers = parseAnswerRows(extractAnswerRows(detail))
+      return {
+        id: readProfileId(detail, summary.kind) || summary.id,
+        kind: summary.kind,
+        answers,
+        createdAt: readCreatedAt(detail) || summary.createdAt || new Date().toISOString(),
+      }
+    }),
+  )
+  replaceAdditionalProfiles(records)
   return {
     profiles: sessionProfileRecords().map(toRecord),
     creatableKinds: missingSessionProfiles(),
   }
 }
 
-function toRecord(record: StoredAdditionalProfile): AdditionalProfileRecord {
-  return { kind: record.kind, answers: record.answers, createdAt: record.createdAt }
-}
-
-function asError(error: unknown) {
-  if (error instanceof ApiRequestError) return error
-  const message = error instanceof Error ? error.message : 'Your profile could not be saved. Please try again.'
-  return new ApiRequestError({ message })
-}
-
-function remember(record: AdditionalProfileRecord, mode: 'create' | 'update') {
-  try {
-    return toRecord(persistAdditionalProfile(record.kind, record.answers, mode))
-  } catch (error) {
-    throw asError(error)
-  }
-}
-
 export const additionalProfileService = {
-  async getState(): Promise<AdditionalProfileState> {
-    if (!additionalProfileEndpoints.state) return localState()
-    const remote = await apiRequest<AdditionalProfileState>(additionalProfileEndpoints.state)
-    const profiles = Array.isArray(remote.profiles) ? remote.profiles : []
-    replaceAdditionalProfiles(
-      profiles.map((profile) => ({
-        kind: profile.kind,
-        answers: profile.answers ?? {},
-        createdAt: profile.createdAt || new Date().toISOString(),
-      })),
-    )
-    return localState()
-  },
-  async view(kind: AdditionalProfileKind): Promise<AdditionalProfileRecord> {
-    if (additionalProfileEndpoints.view) {
-      return apiRequest<AdditionalProfileRecord>(`${additionalProfileEndpoints.view}?type=${encodeURIComponent(kind)}`)
-    }
-    const saved = sessionProfileRecords().find((record) => record.kind === kind)
-    if (!saved) throw new ApiRequestError({ message: 'This profile has not been created yet.' })
-    return toRecord(saved)
-  },
-  async create(kind: AdditionalProfileKind, answers: QuestionnaireAnswers): Promise<AdditionalProfileRecord> {
-    if (additionalProfileEndpoints.create) {
-      const saved = await apiRequest<AdditionalProfileRecord>(additionalProfileEndpoints.create, {
-        method: 'POST',
-        body: { kind, answers },
-      })
-      return remember({ ...saved, kind, answers: saved.answers ?? answers, createdAt: saved.createdAt || new Date().toISOString() }, 'create')
-    }
-    return remember({ kind, answers, createdAt: new Date().toISOString() }, 'create')
-  },
-  async update(kind: AdditionalProfileKind, answers: QuestionnaireAnswers): Promise<AdditionalProfileRecord> {
-    if (additionalProfileEndpoints.update) {
-      const saved = await apiRequest<AdditionalProfileRecord>(additionalProfileEndpoints.update, {
-        method: 'PUT',
-        body: { kind, answers },
-      })
-      return remember({ ...saved, kind, answers: saved.answers ?? answers, createdAt: saved.createdAt || new Date().toISOString() }, 'update')
-    }
-    const existing = sessionProfileRecords().find((record) => record.kind === kind)
-    return remember({ kind, answers, createdAt: existing?.createdAt ?? new Date().toISOString() }, 'update')
-  },
-}
-
-/** The eight new About You questions are frontend configuration. The live /questions list does not include them. */
-export const aboutYouAnswerEndpoint = ''
-
-export async function saveAboutYouAnswers(answers: QuestionnaireAnswers) {
-  void answers
-  if (!aboutYouAnswerEndpoint) {
-    throw new ApiRequestError({
-      message:
-        'These About You questions are not on the Intensity API yet, so the new answers were not stored. Your existing profile questions were saved separately.',
-      code: 'about-you-api-not-configured',
+  getQuestions(kind: AdditionalProfileKind) {
+    const cached = questionCache.get(kind)
+    if (cached) return Promise.resolve(cached)
+    return apiRequest<unknown>(`/profile-questions?profile_type=${encodeURIComponent(kind)}`).then((data) => {
+      const parsed = parseProfileQuestions(data)
+      if (!parsed) throw new ApiRequestError({ message: 'Profile questions could not be loaded.' })
+      questionCache.set(kind, parsed)
+      return parsed
     })
-  }
+  },
+  getState() {
+    if (!stateRequest) {
+    stateRequest = loadState()
+      .then((state) => {
+        markAdditionalProfilesHydrated(true)
+        return state
+      })
+      .catch((error) => {
+        markAdditionalProfilesHydrated(false)
+        throw error
+      })
+      .finally(() => {
+        stateRequest = null
+      })
+    }
+    return stateRequest
+  },
+  async create(kind: AdditionalProfileKind, answers: AdditionalAnswerMap, payload: AdditionalProfileAnswerInput[]) {
+    const saved = await apiRequest<unknown>('/additional-profiles', {
+      method: 'POST',
+      body: { profile_type: kind, answers: payload },
+    })
+    let id = readProfileId(saved, kind)
+    if (!id) {
+      const listed = await apiRequest<unknown>('/additional-profiles')
+      id = parseProfileSummaries(listed).find((item) => item.kind === kind)?.id ?? 0
+    }
+    if (!id) throw new ApiRequestError({ message: 'Your profile was saved, but its id could not be read. Refresh and try again.' })
+    const returned = parseAnswerRows(extractAnswerRows(saved))
+    return remember(
+      {
+        id,
+        kind,
+        answers: Object.keys(returned).length ? returned : answers,
+        createdAt: readCreatedAt(saved) || new Date().toISOString(),
+      },
+      'create',
+    )
+  },
+  async update(kind: AdditionalProfileKind, answers: AdditionalAnswerMap, payload: AdditionalProfileAnswerInput[]) {
+    const existing = sessionProfileRecord(kind)
+    if (!existing) throw new ApiRequestError({ message: 'This profile has not been created yet.' })
+    const saved = await apiRequest<unknown>(`/additional-profiles/${kind}/${existing.id}`, {
+      method: 'PUT',
+      body: { answers: payload },
+    })
+    const returned = parseAnswerRows(extractAnswerRows(saved))
+    return remember(
+      {
+        id: readProfileId(saved, kind) || existing.id,
+        kind,
+        answers: Object.keys(returned).length ? returned : answers,
+        createdAt: readCreatedAt(saved) || existing.createdAt,
+      },
+      'update',
+    )
+  },
 }

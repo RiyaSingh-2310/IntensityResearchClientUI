@@ -5,28 +5,31 @@ import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { paths } from '@/config/paths'
 import { additionalProfileKinds, additionalProfileLabels, type AdditionalProfileKind } from '@/content/questionnaires'
 import { useAuth } from '@/hooks/useAuth'
-import { useSessionProfiles } from '@/lib/additionalProfileSession'
-import { ADDITIONAL_PROFILE_PROMPT_KEY } from '@/services/additionalProfile.service'
+import { useAdditionalProfileSync, useSessionProfiles } from '@/lib/additionalProfileSession'
+import { ADDITIONAL_PROFILE_PROMPT_KEY, additionalProfileService } from '@/services/additionalProfile.service'
 
 export function AdditionalProfilePrompt() {
   const { user, ready } = useAuth()
   const navigate = useNavigate()
   const userId = user?.id ?? null
-  const [closed, setClosed] = useState(false)
+  const [closedFor, setClosedFor] = useState<number | null>(null)
+  const closed = closedFor != null && closedFor === userId
   const { answers } = useSessionProfiles()
+  const sync = useAdditionalProfileSync()
   const missing = additionalProfileKinds.filter((kind) => !answers[kind])
 
   useEffect(() => {
-    setClosed(false)
+    if (userId == null) return
+    void additionalProfileService.getState().catch(() => undefined)
   }, [userId])
 
   const dismissed =
     userId != null && (closed || sessionStorage.getItem(ADDITIONAL_PROFILE_PROMPT_KEY) === String(userId))
-  const open = ready && userId != null && !dismissed && missing.length > 0
+  const open = ready && sync === 'ready' && userId != null && !dismissed && missing.length > 0
 
   function close() {
     if (userId != null) sessionStorage.setItem(ADDITIONAL_PROFILE_PROMPT_KEY, String(userId))
-    setClosed(true)
+    setClosedFor(userId)
   }
 
   function start(kind: AdditionalProfileKind) {

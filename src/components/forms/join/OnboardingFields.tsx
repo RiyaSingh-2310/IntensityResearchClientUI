@@ -3,6 +3,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Field } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
+import { SearchableSelect } from '@/components/forms/SearchableSelect'
 import type { AnswerValue, AnswerValues, FormOption, FormQuestion } from '@/lib/profileQuestions'
 import { cn } from '@/lib/utils'
 
@@ -98,17 +99,34 @@ export function OnboardingFields({
         }
 
         if (question.fieldType === 'dropdown') {
+          const current = typeof value === 'string' ? value : ''
+          const searchable = question.options.length > 12
           return (
             <Field key={question.key} label={question.label} htmlFor={id} required={question.required} error={error} hint={question.hint}>
-              <Select
-                id={id}
-                value={typeof value === 'string' ? value : ''}
-                placeholder="Select an option"
-                options={question.options}
-                aria-required={question.required || undefined}
-                onBlur={() => onBlur?.(question.key)}
-                onChange={(event) => onChange(question.key, event.target.value)}
-              />
+              {searchable ? (
+                <SearchableSelect
+                  id={id}
+                  options={question.options.map((option) => option.label)}
+                  value={question.options.find((option) => option.value === current)?.label ?? ''}
+                  invalid={Boolean(error)}
+                  placeholder="Search options…"
+                  onBlur={() => onBlur?.(question.key)}
+                  onChange={(label) => {
+                    const match = question.options.find((option) => option.label === label)
+                    onChange(question.key, match?.value ?? '')
+                  }}
+                />
+              ) : (
+                <Select
+                  id={id}
+                  value={current}
+                  placeholder="Select an option"
+                  options={question.options}
+                  aria-required={question.required || undefined}
+                  onBlur={() => onBlur?.(question.key)}
+                  onChange={(event) => onChange(question.key, event.target.value)}
+                />
+              )}
             </Field>
           )
         }

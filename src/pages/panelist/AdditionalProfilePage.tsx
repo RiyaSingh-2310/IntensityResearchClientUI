@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { Users } from 'lucide-react'
-import { applyConfiguredAnswer, ConfiguredQuestions, questionErrorKey, validateConfiguredQuestions } from '@/components/forms/ConfiguredQuestions'
+import { AdditionalProfileFields } from '@/components/forms/AdditionalProfileFields'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { paths } from '@/config/paths'
@@ -12,14 +12,26 @@ import {
   additionalProfileLabels,
   additionalProfileSummaries,
   defaultAdditionalProfileKind,
-  questionPanels,
-  questionsFor,
   type AdditionalProfileKind,
-  type QuestionnaireAnswers,
-  type QuestionnaireQuestion,
 } from '@/content/questionnaires'
-import { sessionProfile, useSessionProfiles } from '@/lib/additionalProfileSession'
+import { useAsync } from '@/hooks/useAsync'
+import {
+  applyProfileAnswer,
+  buildAnswerPayload,
+  displayProfileAnswer,
+  isQuestionVisible,
+  panelsFor,
+  questionsForPanel,
+  toggleMultiOption,
+  validateProfileQuestions,
+  type AdditionalAnswerMap,
+  type ProfileQuestion,
+} from '@/lib/additionalProfileForm'
+
+const noQuestions: ProfileQuestion[] = []
+import { sessionProfileRecord, useAdditionalProfileSync, useSessionProfiles } from '@/lib/additionalProfileSession'
 import { omitKey } from '@/lib/utils'
+import { EmptyState, ErrorState, LoadingSkeleton } from '@/components/shared/PageState'
 import { ApiRequestError } from '@/services/errors'
 import { additionalProfileService } from '@/services/additionalProfile.service'
 
@@ -29,7 +41,10 @@ function isKind(value: string | null): value is AdditionalProfileKind {
 
 export function AdditionalProfilePage() {
   const [params, setParams] = useSearchParams()
+  const sync = useAdditionalProfileSync()
+  const hydrated = sync !== 'pending'
   const { answers, order } = useSessionProfiles()
+  const [loadError, setLoadError] = useState('')
   const requested = params.get('type')
   const view = params.get('view')
   const viewing = isKind(view) && answers[view] ? view : null
@@ -39,9 +54,20 @@ export function AdditionalProfilePage() {
   const intro = introKind ? additionalProfileIntro[introKind] : null
 
   useEffect(() => {
-    void additionalProfileService.getState().catch(() => {
-      // The overview already shows the saved profiles. A refresh failure leaves them in place.
-    })
+    let cancelled = false
+    additionalProfileService.getState().then(
+      () => {
+        if (!cancelled) setLoadError('')
+      },
+      (error) => {
+        if (!cancelled) {
+          setLoadError(error instanceof ApiRequestError ? error.message : 'Your additional profiles could not be loaded.')
+        }
+      },
+    )
+    return () => {
+      cancelled = true
+    }
   }, [])
 
   return (
@@ -60,7 +86,11 @@ export function AdditionalProfilePage() {
         </div>
       </section>
       <div className="mx-auto max-w-6xl space-y-6 px-4 py-10 sm:px-6">
-        {editing ? (
+        {!hydrated ? <LoadingSkeleton rows={3} /> : null}
+        {hydrated && loadError && !editing ? (
+          <ErrorState message={loadError} onRetry={() => window.location.reload()} />
+        ) : null}
+        {hydrated && editing ? (
           <PanelWizard
             key={editing}
             kind={editing}
@@ -68,20 +98,16 @@ export function AdditionalProfilePage() {
             onCancel={() => setParams({})}
             onSaved={() => setParams({})}
           />
-        ) : stored && viewing ? (
-          <ProfileOverview
-            kind={viewing}
-            answers={stored}
-            onEdit={() => setParams({ type: viewing })}
-          />
-        ) : (
+        ) : hydrated && stored && viewing ? (
+          <ProfileOverview kind={viewing} answers={stored} onEdit={() => setParams({ type: viewing })} />
+        ) : hydrated && !loadError ? (
           <Overview
             answers={answers}
             order={order}
             onOpen={(kind) => setParams({ view: kind })}
             onBegin={(kind) => setParams({ type: kind })}
           />
-        )}
+        ) : null}
       </div>
     </div>
   )
@@ -93,7 +119,7 @@ function Overview({
   onOpen,
   onBegin,
 }: {
-  answers: Partial<Record<AdditionalProfileKind, QuestionnaireAnswers>>
+  answers: Partial<Record<AdditionalProfileKind, AdditionalAnswerMap>>
   order: AdditionalProfileKind[]
   onOpen: (kind: AdditionalProfileKind) => void
   onBegin: (kind: AdditionalProfileKind) => void
@@ -140,6 +166,8 @@ function Overview({
             </div>
           </CardContent>
         </Card>
+      ) : created.length === 0 ? (
+        <EmptyState title="No additional profiles yet." description="Choose a profile type when questions are available." />
       ) : null}
     </div>
   )
@@ -186,50 +214,47 @@ function ProfileOverview({
   onEdit,
 }: {
   kind: AdditionalProfileKind
-  answers: QuestionnaireAnswers
+  answers: AdditionalAnswerMap
   onEdit: () => void
 }) {
-  const questions = questionsFor(kind)
+  const questionsState = useAsync(() => additionalProfileService.getQuestions(kind), kind)
+  const panels = questionsState.data ? panelsFor(kind, questionsState.data.questions) : []
+
   return (
     <div className="grid gap-4">
-      <div className="flex justify-end">
-        <Button type="button" onClick={onEdit}>Edit</Button>
-      </div>
-      {questionPanels[kind].map((panel) => (
-        <Card key={panel.id}>
-          <CardContent className="pt-6">
-            <h2 className="font-display text-2xl text-ink">{panel.title}</h2>
-            <p className="mt-2 text-sm leading-6 text-ink-soft">{panel.description}</p>
-            <dl className="mt-4">
-              {panel.keys.map((key) => {
-                const question = questions.find((item) => item.key === key)
-                if (!question || (question.showIf && answers[question.showIf.key] !== question.showIf.equals)) return null
-                const value = answers[key] === 'Other' ? answers[`${key}__other`] || 'Other' : answers[key]
-                return (
-                  <div key={key} className="grid gap-1 border-b border-line py-3 last:border-b-0 sm:grid-cols-2">
-                    <dt className="text-sm text-muted">{question.label}</dt>
-                    <dd className="text-sm font-medium break-words text-ink">{value || '—'}</dd>
-                  </div>
-                )
-              })}
-            </dl>
-          </CardContent>
-        </Card>
-      ))}
+      {questionsState.loading ? <LoadingSkeleton rows={3} /> : null}
+      {questionsState.error ? <ErrorState message={questionsState.error} onRetry={questionsState.reload} /> : null}
+      {questionsState.data ? (
+        <>
+          <div className="flex justify-end">
+            <Button type="button" onClick={onEdit}>Edit</Button>
+          </div>
+          {panels.map((panel) => (
+            <Card key={panel.id}>
+              <CardContent className="pt-6">
+                <h2 className="font-display text-2xl text-ink">{panel.title}</h2>
+                <p className="mt-2 text-sm leading-6 text-ink-soft">{panel.description}</p>
+                <dl className="mt-4">
+                  {questionsForPanel(questionsState.data?.questions ?? [], panel.keys).map((question) => {
+                    if (!isQuestionVisible(question, answers)) return null
+                    return (
+                      <div key={question.key} className="grid gap-1 border-b border-line py-3 last:border-b-0 sm:grid-cols-2">
+                        <dt className="text-sm text-muted">{question.label}</dt>
+                        <dd className="text-sm font-medium break-words text-ink">{displayProfileAnswer(question, answers) || '—'}</dd>
+                      </div>
+                    )
+                  })}
+                </dl>
+              </CardContent>
+            </Card>
+          ))}
+        </>
+      ) : null}
       <Button asChild variant="outline" className="w-fit">
         <Link to={paths.additionalProfile}>Back to Additional Profile</Link>
       </Button>
     </div>
   )
-}
-
-function panelQuestions(kind: AdditionalProfileKind, keys: string[]) {
-  const all = questionsFor(kind)
-  return keys.map((key) => all.find((question) => question.key === key)).filter((question): question is QuestionnaireQuestion => Boolean(question))
-}
-
-function stepErrors(questions: QuestionnaireQuestion[], answers: QuestionnaireAnswers) {
-  return validateConfiguredQuestions(questions, answers)
 }
 
 function PanelWizard({
@@ -239,32 +264,59 @@ function PanelWizard({
   onSaved,
 }: {
   kind: AdditionalProfileKind
-  initial?: QuestionnaireAnswers
+  initial?: AdditionalAnswerMap
   onCancel: () => void
   onSaved: () => void
 }) {
-  const panels = questionPanels[kind]
+  const questionsState = useAsync(() => additionalProfileService.getQuestions(kind), kind)
+  const questions = questionsState.data?.questions ?? noQuestions
+  const panels = useMemo(() => panelsFor(kind, questions), [kind, questions])
   const [step, setStep] = useState(0)
-  const [answers, setAnswers] = useState<QuestionnaireAnswers>(initial ? { ...initial } : {})
+  const [answers, setAnswers] = useState<AdditionalAnswerMap>(initial ? { ...initial } : {})
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [touched, setTouched] = useState<Record<string, boolean>>({})
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
+  const saveInFlight = useRef(false)
+  const dirty = JSON.stringify(answers) !== JSON.stringify(initial ?? {})
   const panel = panels[step]
-  const questions = useMemo(() => panelQuestions(kind, panel.keys), [kind, panel.keys])
-  const lastStep = step === panels.length - 1
+  const panelQuestions = useMemo(() => (panel ? questionsForPanel(questions, panel.keys) : []), [panel, questions])
+  const lastStep = panels.length > 0 && step === panels.length - 1
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }, [step])
 
-  function onChange(key: string, value: string) {
-    const nextAnswers = applyConfiguredAnswer(answers, key, value)
+  useEffect(() => {
+    function onLeave(event: BeforeUnloadEvent) {
+      if (!dirty) return
+      event.preventDefault()
+      event.returnValue = ''
+    }
+    window.addEventListener('beforeunload', onLeave)
+    return () => window.removeEventListener('beforeunload', onLeave)
+  }, [dirty])
+
+  function onChange(key: string, value: string | string[]) {
+    const nextAnswers = applyProfileAnswer(questions, answers, key, value)
     setAnswers(nextAnswers)
-    const errorKey = questionErrorKey(key.replace(/__other$/, ''))
-    const next = stepErrors(questions, nextAnswers)
+    const parentKey = key.replace(/__other$/, '')
+    const next = validateProfileQuestions(panelQuestions, nextAnswers)
+    const errorKey = `q-${parentKey}`
     setErrors((current) => {
-      if (!touched[key] && !touched[errorKey.slice(2)] && !current[errorKey]) return current
+      if (!touched[key] && !touched[parentKey] && !current[errorKey]) return current
+      if (next[errorKey]) return { ...current, [errorKey]: next[errorKey] }
+      return omitKey(current, errorKey)
+    })
+  }
+
+  function onToggle(question: ProfileQuestion, optionKey: string) {
+    const nextAnswers = toggleMultiOption(questions, answers, question, optionKey)
+    setAnswers(nextAnswers)
+    const next = validateProfileQuestions(panelQuestions, nextAnswers)
+    const errorKey = `q-${question.key}`
+    setErrors((current) => {
+      if (!touched[question.key] && !current[errorKey]) return current
       if (next[errorKey]) return { ...current, [errorKey]: next[errorKey] }
       return omitKey(current, errorKey)
     })
@@ -272,19 +324,14 @@ function PanelWizard({
 
   function onBlur(key: string) {
     setTouched((current) => ({ ...current, [key]: true }))
-    const next = stepErrors(questions, answers)
-    const errorKey = questionErrorKey(key.replace(/__other$/, ''))
-    setErrors((current) => {
-      const copy = { ...current }
-      if (next[errorKey]) copy[errorKey] = next[errorKey]
-      else delete copy[errorKey]
-      return copy
-    })
+    const next = validateProfileQuestions(panelQuestions, answers)
+    const errorKey = `q-${key.replace(/__other$/, '')}`
+    setErrors((current) => (next[errorKey] ? { ...current, [errorKey]: next[errorKey] } : omitKey(current, errorKey)))
   }
 
-  function showStepErrors(index: number, source: QuestionnaireAnswers) {
-    const nextQuestions = panelQuestions(kind, panels[index].keys)
-    const next = stepErrors(nextQuestions, source)
+  function showStepErrors(index: number, source: AdditionalAnswerMap) {
+    const nextQuestions = questionsForPanel(questions, panels[index]?.keys ?? [])
+    const next = validateProfileQuestions(nextQuestions, source)
     setErrors(next)
     setTouched((current) => {
       const copy = { ...current }
@@ -300,6 +347,11 @@ function PanelWizard({
     setStep(index)
   }
 
+  function requestCancel() {
+    if (dirty && !window.confirm('Leave this profile? Answers that have not been saved will be lost.')) return
+    onCancel()
+  }
+
   async function onNext() {
     if (!showStepErrors(step, answers)) return
     if (!lastStep) {
@@ -307,26 +359,39 @@ function PanelWizard({
       return
     }
     for (let index = 0; index < panels.length; index += 1) {
-      const nextQuestions = panelQuestions(kind, panels[index].keys)
-      if (Object.keys(stepErrors(nextQuestions, answers)).length > 0) {
+      const nextQuestions = questionsForPanel(questions, panels[index].keys)
+      if (Object.keys(validateProfileQuestions(nextQuestions, answers)).length > 0) {
         setStep(index)
         showStepErrors(index, answers)
         return
       }
     }
+    if (saveInFlight.current) return
+    saveInFlight.current = true
     setSaving(true)
     setSaveError('')
     try {
-      const exists = Boolean(sessionProfile(kind))
-      if (exists) await additionalProfileService.update(kind, answers)
-      else await additionalProfileService.create(kind, answers)
+      const payload = buildAnswerPayload(questions, answers)
+      const exists = Boolean(sessionProfileRecord(kind))
+      if (exists) await additionalProfileService.update(kind, answers, payload)
+      else await additionalProfileService.create(kind, answers, payload)
       onSaved()
     } catch (error) {
       const message = error instanceof ApiRequestError ? error.message : 'Your profile could not be saved. Please try again.'
       setSaveError(message)
+      if (error instanceof ApiRequestError && error.status === 409) {
+        void additionalProfileService.getState().catch(() => undefined)
+      }
     } finally {
+      saveInFlight.current = false
       setSaving(false)
     }
+  }
+
+  if (questionsState.loading) return <LoadingSkeleton rows={4} />
+  if (questionsState.error) return <ErrorState message={questionsState.error} onRetry={questionsState.reload} />
+  if (!panel) {
+    return <EmptyState title="No questions are available for this profile." description="Please try again later." />
   }
 
   return (
@@ -339,17 +404,21 @@ function PanelWizard({
           <h2 className="font-display mt-2 text-2xl text-ink">{panel.title}</h2>
           <p className="mt-2 text-sm leading-6 text-ink-soft">{panel.description}</p>
         </div>
-        <p className="text-sm text-ink-soft">
-          These answers stay in this browser session. They are not stored on your Intensity account yet.
-        </p>
-        <ConfiguredQuestions questions={questions} answers={answers} errors={errors} onChange={onChange} onBlur={onBlur} />
+        <AdditionalProfileFields
+          questions={panelQuestions}
+          answers={answers}
+          errors={errors}
+          onChange={onChange}
+          onToggle={onToggle}
+          onBlur={onBlur}
+        />
         {saveError ? (
           <p className="rounded-xl border border-danger/30 bg-danger-soft px-4 py-3 text-sm text-danger" role="alert">
             {saveError}
           </p>
         ) : null}
         <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-between">
-          <Button type="button" variant="outline" disabled={saving} onClick={() => (step === 0 ? onCancel() : goTo(step - 1))}>
+          <Button type="button" variant="outline" disabled={saving} onClick={() => (step === 0 ? requestCancel() : goTo(step - 1))}>
             {step === 0 ? 'Back' : 'Previous'}
           </Button>
           <Button type="button" disabled={saving} onClick={() => void onNext()}>

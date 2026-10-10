@@ -1,5 +1,4 @@
 import { useMemo, useRef, useState, type ReactNode } from 'react'
-import { applyConfiguredAnswer, ConfiguredQuestions, questionErrorKey, validateConfiguredQuestions } from '@/components/forms/ConfiguredQuestions'
 import { OnboardingFields } from '@/components/forms/join/OnboardingFields'
 import { PhoneInput } from '@/components/forms/PhoneInput'
 import { SearchableSelect } from '@/components/forms/SearchableSelect'
@@ -11,7 +10,6 @@ import { Field } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { countries, composePhone, parsePhone } from '@/content/countries'
 import { PROFILE_SECTION_IDS, profileSectionCopy, type ProfileSectionId } from '@/content/profileQuestions'
-import { questionsFor, type QuestionnaireAnswers } from '@/content/questionnaires'
 import { useAuth } from '@/hooks/useAuth'
 import { useAsync } from '@/hooks/useAsync'
 import { digitsOnly } from '@/lib/numeric'
@@ -78,9 +76,6 @@ export function ProfilePage() {
   const saveInFlight = useRef(false)
   const [personalErrors, setPersonalErrors] = useState<Record<string, string>>({})
   const [personalTouched, setPersonalTouched] = useState<Record<string, boolean>>({})
-  const [aboutAnswers, setAboutAnswers] = useState<QuestionnaireAnswers>({})
-  const [aboutErrors, setAboutErrors] = useState<Record<string, string>>({})
-  const [aboutTouched, setAboutTouched] = useState<Record<string, boolean>>({})
   const [sectionErrors, setSectionErrors] = useState<Record<string, string>>({})
   const [sectionTouched, setSectionTouched] = useState<Record<string, boolean>>({})
   const [uploading, setUploading] = useState(false)
@@ -134,23 +129,6 @@ export function ProfilePage() {
     setSectionErrors((current) => (next[errorKey] ? { ...current, [errorKey]: next[errorKey] } : omitKey(current, errorKey)))
   }
 
-  function onAboutChange(key: string, value: string) {
-    const next = applyConfiguredAnswer(aboutAnswers, key, value)
-    setAboutAnswers((current) => applyConfiguredAnswer(current, key, value))
-    const errorKey = questionErrorKey(key.replace(/__other$/, ''))
-    const parentKey = key.replace(/__other$/, '')
-    if (!aboutTouched[key] && !aboutTouched[parentKey] && !aboutErrors[errorKey]) return
-    const validated = validateConfiguredQuestions(questionsFor('about-you'), next)
-    setAboutErrors((current) => (validated[errorKey] ? { ...current, [errorKey]: validated[errorKey] } : omitKey(current, errorKey)))
-  }
-
-  function onAboutBlur(key: string) {
-    setAboutTouched((current) => ({ ...current, [key]: true }))
-    const validated = validateConfiguredQuestions(questionsFor('about-you'), aboutAnswers)
-    const errorKey = questionErrorKey(key.replace(/__other$/, ''))
-    setAboutErrors((current) => (validated[errorKey] ? { ...current, [errorKey]: validated[errorKey] } : omitKey(current, errorKey)))
-  }
-
   async function onSave(target: 'personal' | ProfileSectionId) {
     if (!data || !form || !seeded || saveInFlight.current) return
     setSaveError('')
@@ -160,11 +138,6 @@ export function ProfilePage() {
       setPersonalErrors(next)
       setPersonalTouched({ name: true, country: true, phone: true, dateOfBirth: true })
       if (Object.keys(next).length) return
-    }
-    if (target === 'demographics') {
-      const nextErrors = validateConfiguredQuestions(questionsFor('about-you'), aboutAnswers)
-      setAboutErrors(nextErrors)
-      if (Object.keys(nextErrors).length) return
     }
     if (target !== 'personal') {
       const nextErrors = validateQuestions(sections[target], form.answers)
@@ -189,11 +162,7 @@ export function ProfilePage() {
       } else {
         const answers = buildProfileAnswers(sections[target], form.answers).answers
         if (answers.length) await onboardingService.saveAnswers(answers)
-        const aboutNote =
-          target === 'demographics' && Object.values(aboutAnswers).some((value) => value.trim())
-            ? ' The extra About You answers stay on this page for this visit and were not sent to the account API.'
-            : ''
-        setMessage(`${profileSectionCopy[target].heading} was updated.${aboutNote}`)
+        setMessage(`${profileSectionCopy[target].heading} was updated.`)
       }
       reload()
     } catch (err) {
@@ -410,25 +379,10 @@ export function ProfilePage() {
                 setSectionErrors((current) => (next[errorKey] ? { ...current, [errorKey]: next[errorKey] } : omitKey(current, errorKey)))
               }}
             />
-            {id === 'demographics' ? (
-              <ConfiguredQuestions
-                questions={questionsFor('about-you')}
-                answers={aboutAnswers}
-                errors={aboutErrors}
-                onBlur={onAboutBlur}
-                onChange={onAboutChange}
-              />
-            ) : null}
             <div className="flex justify-end">
               <Button
                 onClick={() => void onSave(id)}
-                disabled={
-                  Boolean(saving) ||
-                  (id === 'demographics'
-                    ? !sectionDirty(sections[id], form.answers, seeded.answers) &&
-                      !Object.values(aboutAnswers).some((value) => value.trim())
-                    : !sectionDirty(sections[id], form.answers, seeded.answers))
-                }
+                disabled={Boolean(saving) || !sectionDirty(sections[id], form.answers, seeded.answers)}
               >
                 {saving === id ? 'Saving…' : 'Save changes'}
               </Button>

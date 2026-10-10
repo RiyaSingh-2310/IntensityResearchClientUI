@@ -133,6 +133,21 @@ export function buildProfileAnswers(questions: FormQuestion[], values: AnswerVal
   return { answers, unmapped: [] }
 }
 
+function refIds(row: OnboardingAnswer) {
+  const raw = row.answer_ref_ids
+  if (Array.isArray(raw)) return raw.map((item) => String(item)).filter((id) => id && id !== '0')
+  if (typeof raw === 'string' && raw.trim().startsWith('[')) {
+    try {
+      const parsed = JSON.parse(raw) as unknown
+      if (Array.isArray(parsed)) return parsed.map((item) => String(item)).filter((id) => id && id !== '0')
+    } catch {
+      /* The API may send a plain id instead of a JSON list. */
+    }
+  }
+  const single = String(row.answer_ref_id ?? '')
+  return single && single !== '0' ? [single] : []
+}
+
 export function answersToFormValues(answers: OnboardingAnswer[], questions: FormQuestion[]): AnswerValues {
   const values: AnswerValues = {}
   for (const question of questions) {
@@ -145,7 +160,15 @@ export function answersToFormValues(answers: OnboardingAnswer[], questions: Form
       continue
     }
 
-    const selected = rows.map((row) => String(row.answer_ref_id ?? '')).filter((item) => item && item !== '0')
+    const selected = rows.flatMap((row) => refIds(row))
+    if (!selected.length) {
+      const byName = rows
+        .flatMap((row) => String(row.answer_text ?? '').split(',').map((item) => item.trim()).filter(Boolean))
+        .map((name) => question.options.find((option) => option.label.toLowerCase() === name.toLowerCase())?.value)
+        .filter((item): item is string => Boolean(item))
+      if (byName.length) values[question.key] = question.fieldType === 'checkbox' ? Array.from(new Set(byName)) : byName[0]
+      continue
+    }
     if (!selected.length) continue
     values[question.key] = question.fieldType === 'checkbox' ? Array.from(new Set(selected)) : selected[0]
   }

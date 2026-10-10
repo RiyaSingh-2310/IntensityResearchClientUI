@@ -41,6 +41,7 @@ export interface OnboardingQuestion {
   field_type: string
   dropdown_category: string | null
   is_required: number
+  display_order?: number
   options: DropdownOption[]
 }
 
@@ -62,6 +63,7 @@ export interface OnboardingAnswer {
   field_type: string
   answer_text: string
   answer_ref_id: string
+  answer_ref_ids?: Array<string | number> | string | null
   created_at: string
 }
 

@@ -13,16 +13,18 @@ import { asNumber } from './utils'
 
 export function flattenQuestions(steps: OnboardingStepGroup[]) {
   return steps.flatMap((step) =>
-    step.questions.map((question) => ({
-      ...question,
-      id: asNumber(question.id),
-      step_no: asNumber(question.step_no),
-      is_required: asNumber(question.is_required),
-      options: (question.options ?? []).map((option) => ({
-        id: asNumber(option.id),
-        name: option.name,
+    [...step.questions]
+      .sort((a, b) => asNumber(a.display_order) - asNumber(b.display_order) || asNumber(a.id) - asNumber(b.id))
+      .map((question) => ({
+        ...question,
+        id: asNumber(question.id),
+        step_no: asNumber(question.step_no ?? step.step_no),
+        is_required: asNumber(question.is_required),
+        options: (question.options ?? []).map((option) => ({
+          id: asNumber(option.id),
+          name: option.name,
+        })),
       })),
-    })),
   )
 }
 
