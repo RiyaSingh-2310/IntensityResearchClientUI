@@ -14,9 +14,10 @@ import { useAuth } from '@/hooks/useAuth'
 import { useAsync } from '@/hooks/useAsync'
 import { digitsOnly } from '@/lib/numeric'
 import {
+  answersForSave,
   answersToFormValues,
-  buildProfileAnswers,
   buildProfileSections,
+  optionLabel,
   validateQuestions,
   type AnswerValues,
   type FormQuestion,
@@ -50,10 +51,13 @@ function validateDateOfBirth(value: string) {
   return ''
 }
 
-function validatePersonal(form: { name: string; phoneCountry: string; phone: string; country: string; dateOfBirth: string }) {
+function validatePersonal(
+  form: { name: string; phoneCountry: string; phone: string; country: string; dateOfBirth: string },
+  countryRequired: boolean,
+) {
   const errors: Record<string, string> = {}
   if (!form.name.trim()) errors.name = 'Full Name is required.'
-  if (!form.country.trim()) errors.country = 'Country is required.'
+  if (countryRequired && !form.country.trim()) errors.country = 'Country is required.'
   const phoneError = validatePhone(form.phoneCountry, form.phone)
   if (phoneError) errors.phone = phoneError
   const dobError = validateDateOfBirth(form.dateOfBirth)
@@ -82,20 +86,26 @@ export function ProfilePage() {
   const [message, setMessage] = useState('')
   const [saveError, setSaveError] = useState('')
   const sections = useMemo(() => buildProfileSections(data?.steps ?? []), [data])
+  const profileQuestions = useMemo(() => PROFILE_SECTION_IDS.flatMap((id) => sections[id]), [sections])
+  const countryQuestion = useMemo(
+    () => profileQuestions.find((question) => question.api.dropdown_category?.toLowerCase() === 'country'),
+    [profileQuestions],
+  )
   const seeded = useMemo(() => {
     if (!data) return null
     const phone = parsePhone(data.user.phone)
+    const answers = answersToFormValues(data.answers, profileQuestions)
+    const countryValue = countryQuestion ? answers[countryQuestion.key] : ''
     return {
       name: data.user.name,
       phoneCountry: phone.country,
       phone: digitsOnly(phone.number, PHONE_MAX_DIGITS),
-      answers: answersToFormValues(
-        data.answers,
-        PROFILE_SECTION_IDS.flatMap((id) => sections[id]),
-      ),
+      country: countryQuestion && typeof countryValue === 'string' ? optionLabel(countryQuestion, countryValue) : '',
+      dateOfBirth: '',
+      answers,
     }
-  }, [data, sections])
-  const form = draft ?? (seeded ? { ...seeded, country: '', dateOfBirth: '' } : null)
+  }, [countryQuestion, data, profileQuestions])
+  const form = draft ?? seeded
   const visibleSectionIds = PROFILE_SECTION_IDS.filter((id) => sections[id].length)
 
   function setForm(updater: (current: NonNullable<typeof form>) => NonNullable<typeof form>) {
@@ -105,19 +115,26 @@ export function ProfilePage() {
 
   function syncPersonal(next: NonNullable<typeof form>, field: string) {
     if (!personalTouched[field]) return
-    const messageForField = validatePersonal(next)[field]
+    const messageForField = validatePersonal(next, Boolean(countryQuestion?.required))[field]
     setPersonalErrors((current) => (messageForField ? { ...current, [field]: messageForField } : omitKey(current, field)))
   }
 
   function touchPersonal(field: string, next = form) {
     setPersonalTouched((current) => ({ ...current, [field]: true }))
     if (!next) return
-    const messageForField = validatePersonal(next)[field]
+    const messageForField = validatePersonal(next, Boolean(countryQuestion?.required))[field]
     setPersonalErrors((current) => (messageForField ? { ...current, [field]: messageForField } : omitKey(current, field)))
   }
 
   function updateAnswer(key: string, value: string | string[]) {
-    setForm((current) => ({ ...current, answers: { ...current.answers, [key]: value } }))
+    setForm((current) => {
+      const answers = { ...current.answers, [key]: value }
+      const country =
+        countryQuestion && key === countryQuestion.key && typeof value === 'string'
+          ? optionLabel(countryQuestion, value)
+          : current.country
+      return { ...current, answers, country }
+    })
   }
 
   function onSectionBlur(questions: FormQuestion[], key: string) {
@@ -134,7 +151,7 @@ export function ProfilePage() {
     setSaveError('')
     setMessage('')
     if (target === 'personal') {
-      const next = validatePersonal(form)
+      const next = validatePersonal(form, Boolean(countryQuestion?.required))
       setPersonalErrors(next)
       setPersonalTouched({ name: true, country: true, phone: true, dateOfBirth: true })
       if (Object.keys(next).length) return
@@ -148,19 +165,28 @@ export function ProfilePage() {
     setSaving(target)
     try {
       if (target === 'personal') {
+        const countryChanged = Boolean(countryQuestion) && form.country !== seeded.country
+        const countryOption = countryQuestion?.options.find((item) => item.label === form.country)
+        if (countryChanged && !countryOption) {
+          setPersonalErrors((current) => ({ ...current, country: 'Select a country from the list.' }))
+          return
+        }
         const phoneChanged = form.phone !== seeded.phone || form.phoneCountry !== seeded.phoneCountry
         await authService.updateMe({
           name: form.name.trim(),
           phone: phoneChanged ? composePhone(form.phoneCountry, form.phone) : (data.user.phone ?? ''),
         })
         await refresh()
-        const localNote =
-          form.country.trim() || form.dateOfBirth.trim()
-            ? ' Country and date of birth stay on this page for this visit. They are not stored by the account API.'
-            : ''
-        setMessage(`Your name and mobile number were updated.${localNote}`)
+        if (countryChanged && countryQuestion && countryOption) {
+          const answers = answersForSave(data.answers, [countryQuestion], { [countryQuestion.key]: countryOption.value })
+          if (answers.length) await onboardingService.saveAnswers(answers)
+        }
+        const localNote = form.dateOfBirth.trim()
+          ? ' Date of birth stays on this page for this visit. The account API does not store it.'
+          : ''
+        setMessage(`Your name and mobile number were updated.${countryChanged ? ' Country was saved with your profile answers.' : ''}${localNote}`)
       } else {
-        const answers = buildProfileAnswers(sections[target], form.answers).answers
+        const answers = answersForSave(data.answers, sections[target], form.answers)
         if (answers.length) await onboardingService.saveAnswers(answers)
         setMessage(`${profileSectionCopy[target].heading} was updated.`)
       }
@@ -227,8 +253,8 @@ export function ProfilePage() {
     form.name.trim() !== seeded.name.trim() ||
     form.phone !== seeded.phone ||
     form.phoneCountry !== seeded.phoneCountry ||
-    Boolean(form.country.trim()) ||
-    Boolean(form.dateOfBirth.trim())
+    form.country !== seeded.country ||
+    form.dateOfBirth !== seeded.dateOfBirth
 
   return (
     <div>
@@ -325,16 +351,21 @@ export function ProfilePage() {
               }}
             />
           </Field>
-          <Field label="Country" htmlFor="profile-country" required error={personalErrors.country}>
+          <Field label="Country" htmlFor="profile-country" required={Boolean(countryQuestion?.required)} error={personalErrors.country}>
             <SearchableSelect
               id="profile-country"
-              options={countryNames}
+              options={countryQuestion ? countryQuestion.options.map((option) => option.label) : countryNames}
               value={form.country}
               invalid={Boolean(personalErrors.country)}
               placeholder="Search countries"
               onBlur={() => touchPersonal('country')}
               onChange={(country) => {
-                const next = { ...form, country }
+                const option = countryQuestion?.options.find((item) => item.label === country)
+                const next = {
+                  ...form,
+                  country,
+                  answers: option && countryQuestion ? { ...form.answers, [countryQuestion.key]: option.value } : form.answers,
+                }
                 setForm(() => next)
                 if (personalTouched.country || personalErrors.country) syncPersonal(next, 'country')
               }}

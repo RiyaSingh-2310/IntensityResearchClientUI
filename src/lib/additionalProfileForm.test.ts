@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import {
   applyProfileAnswer,
   buildAnswerPayload,
+  extractAnswerRows,
   isQuestionVisible,
   panelsFor,
   parseAnswerRows,
@@ -11,6 +12,8 @@ import {
   validateProfileQuestions,
   type ProfileQuestion,
 } from './additionalProfileForm'
+import { answersForSave, type FormQuestion } from './profileQuestions'
+import type { OnboardingAnswer } from '@/types/api'
 
 const questions: ProfileQuestion[] = [
   {
@@ -110,8 +113,58 @@ assert.deepEqual(
   { conditions: ['asthma', 'gout'], specialist_type: 'Cardiologist' },
 )
 
-assert.deepEqual(parseProfileSummaries({ profiles: [{ id: '4', profile_type: 'patient', created_at: '2026-01-01' }] }), [
-  { id: 4, kind: 'patient', createdAt: '2026-01-01' },
+assert.deepEqual(
+  parseAnswerRows(
+    extractAnswerRows({
+      questions: [
+        { question_key: 'licensed', answer: { option_key: 'yes' } },
+        { question_key: 'license_number', answer_text: 'AB-1' },
+        { question_key: 'conditions', options: [] },
+      ],
+    }),
+  ),
+  { licensed: 'yes', license_number: 'AB-1' },
+)
+
+assert.deepEqual(parseProfileSummaries([{ id: 2, profile_type: 'Healthcare' }]), [
+  { id: 2, kind: 'healthcare', createdAt: '' },
+])
+
+const savedAnswers: OnboardingAnswer[] = [
+  {
+    id: '1',
+    question_id: '9',
+    question_text: 'Topics',
+    step_no: '4',
+    field_type: 'checkbox',
+    answer_text: '',
+    answer_ref_id: '0',
+    answer_ref_ids: [3, 4],
+    created_at: '',
+  },
+  {
+    id: '2',
+    question_id: '10',
+    question_text: 'Consent',
+    step_no: '5',
+    field_type: 'radio',
+    answer_text: 'Yes',
+    answer_ref_id: '86',
+    created_at: '',
+  },
+]
+const edited = {
+  key: '9',
+  section: 'preferences',
+  label: 'Topics',
+  fieldType: 'checkbox',
+  required: true,
+  options: [],
+  api: { id: 9, step_no: 4, question_text: 'Topics', field_type: 'checkbox', dropdown_category: null, is_required: 1, options: [] },
+} satisfies FormQuestion
+assert.deepEqual(answersForSave(savedAnswers, [edited], { '9': ['3'] }), [
+  { question_id: 10, answer_ref_id: 86 },
+  { question_id: 9, answer_ref_ids: [3] },
 ])
 
 const panels = panelsFor('patient', [

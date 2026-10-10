@@ -52,7 +52,7 @@ export function questionErrorKey(questionKey: string) {
 }
 
 function flag(value: unknown) {
-  return value === true || value === 1 || value === '1'
+  return value === true || value === 1 || value === '1' || value === 'true'
 }
 
 function text(value: unknown) {
@@ -125,7 +125,7 @@ export function parseProfileQuestions(payload: unknown): ProfileQuestionSet | nu
   const record = asRecord(payload)
   const source = record && (record.questions || record.profile_type) ? record : asRecord(record?.data) ?? record
   if (!source) return null
-  const profileType = text(source.profile_type).trim()
+  const profileType = text(source.profile_type).trim().toLowerCase()
   if (!isKind(profileType)) return null
   const questions = (Array.isArray(source.questions) ? source.questions : [])
     .map(parseQuestion)
@@ -237,13 +237,25 @@ export function buildAnswerPayload(questions: ProfileQuestion[], answers: Additi
   return payload
 }
 
+function optionKeyFrom(value: unknown) {
+  if (typeof value === 'string' || typeof value === 'number') return text(value).trim()
+  const record = asRecord(value)
+  if (!record) return ''
+  return text(record.option_key || record.key).trim()
+}
+
 function stringList(value: unknown): string[] {
-  if (Array.isArray(value)) return value.map((item) => text(item).trim()).filter(Boolean)
+  if (Array.isArray(value)) return value.map(optionKeyFrom).filter(Boolean)
   if (typeof value === 'string' && value.trim().startsWith('[')) {
     const parsed = safeJson(value)
-    if (Array.isArray(parsed)) return parsed.map((item) => text(item).trim()).filter(Boolean)
+    if (Array.isArray(parsed)) return parsed.map(optionKeyFrom).filter(Boolean)
   }
-  const single = text(value).trim()
+  const record = asRecord(value)
+  if (record) {
+    const nested = stringList(record.option_keys ?? record.option_key ?? record.key)
+    if (nested.length) return nested
+  }
+  const single = optionKeyFrom(value)
   return single ? [single] : []
 }
 
@@ -327,7 +339,7 @@ export interface AdditionalProfileSummary {
 }
 
 function profileKind(value: unknown): AdditionalProfileKind | null {
-  const kind = text(value).trim()
+  const kind = text(value).trim().toLowerCase()
   return isKind(kind) ? kind : null
 }
 
@@ -358,13 +370,53 @@ export function parseProfileSummaries(payload: unknown): AdditionalProfileSummar
   return summaries
 }
 
+function rowsFromAnswers(value: unknown): unknown[] | null {
+  if (Array.isArray(value)) return value
+  const record = asRecord(value)
+  if (!record) return null
+  if (text(record.question_key).trim()) return [record]
+  const rows: unknown[] = []
+  for (const [key, answer] of Object.entries(record)) {
+    if (key === 'profile_type' || key === 'profile_label' || key === 'id') continue
+    const nested = asRecord(answer)
+    if (typeof answer === 'string' || Array.isArray(answer)) {
+      rows.push({ question_key: key, answer_text: typeof answer === 'string' ? answer : undefined, option_keys: Array.isArray(answer) ? answer : undefined })
+      continue
+    }
+    if (nested) rows.push({ question_key: nested.question_key || key, ...nested })
+  }
+  return rows.length ? rows : null
+}
+
+function rowsFromQuestions(value: unknown): unknown[] {
+  if (!Array.isArray(value)) return []
+  const rows: unknown[] = []
+  for (const item of value) {
+    const question = asRecord(item)
+    if (!question) continue
+    const key = text(question.question_key).trim()
+    if (!key) continue
+    const nested = asRecord(question.answer) ?? asRecord(question.selected) ?? asRecord(question.response)
+    const source = nested ?? question
+    const hasAnswer = source.option_key || source.option_keys || source.answer_text || source.selected_option_keys
+    if (!hasAnswer) continue
+    rows.push({
+      question_key: key,
+      option_key: source.option_key,
+      option_keys: source.option_keys ?? source.selected_option_keys,
+      answer_text: source.answer_text,
+    })
+  }
+  return rows
+}
+
 export function extractAnswerRows(payload: unknown): unknown[] {
   const record = asRecord(payload)
-  if (!record) return []
-  if (Array.isArray(record.answers)) return record.answers
-  const nested = asRecord(record.profile)
-  if (nested && Array.isArray(nested.answers)) return nested.answers
-  return []
+  if (!record) return Array.isArray(payload) ? payload : []
+  const direct = rowsFromAnswers(record.answers) ?? rowsFromAnswers(asRecord(record.profile)?.answers)
+  if (direct?.length) return direct
+  const embedded = rowsFromQuestions(record.questions ?? asRecord(record.profile)?.questions)
+  return embedded
 }
 
 export function readProfileId(payload: unknown, kind: AdditionalProfileKind) {

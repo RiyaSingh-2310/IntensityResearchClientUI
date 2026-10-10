@@ -105,10 +105,19 @@ export const additionalProfileService = {
     return stateRequest
   },
   async create(kind: AdditionalProfileKind, answers: AdditionalAnswerMap, payload: AdditionalProfileAnswerInput[]) {
-    const saved = await apiRequest<unknown>('/additional-profiles', {
-      method: 'POST',
-      body: { profile_type: kind, answers: payload },
-    })
+    let saved: unknown
+    try {
+      saved = await apiRequest<unknown>('/additional-profiles', {
+        method: 'POST',
+        body: { profile_type: kind, answers: payload },
+      })
+    } catch (error) {
+      if (error instanceof ApiRequestError && error.status === 409) {
+        await this.getState()
+        return this.update(kind, answers, payload)
+      }
+      throw error
+    }
     let id = readProfileId(saved, kind)
     if (!id) {
       const listed = await apiRequest<unknown>('/additional-profiles')

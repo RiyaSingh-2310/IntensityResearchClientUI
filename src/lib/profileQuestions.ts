@@ -133,6 +133,44 @@ export function buildProfileAnswers(questions: FormQuestion[], values: AnswerVal
   return { answers, unmapped: [] }
 }
 
+function inputFromStored(row: OnboardingAnswer, ids: number[]): OnboardingAnswerInput | null {
+  const questionId = asNumber(row.question_id)
+  if (!questionId) return null
+  const field = String(row.field_type || '').toLowerCase()
+  if (field === 'text') {
+    const answer = String(row.answer_text ?? '').trim()
+    return answer ? { question_id: questionId, answer_text: answer } : null
+  }
+  if (field === 'checkbox' || ids.length > 1) {
+    return ids.length ? { question_id: questionId, answer_ref_ids: ids } : null
+  }
+  if (ids.length === 1) return { question_id: questionId, answer_ref_id: ids[0] }
+  const answer = String(row.answer_text ?? '').trim()
+  return answer ? { question_id: questionId, answer_text: answer } : null
+}
+
+/**
+ * Sends the edited questions plus every other saved answer.
+ * POST /onboarding/answers is the only write, so a section save must not drop privacy or untouched steps.
+ */
+export function answersForSave(existing: OnboardingAnswer[], questions: FormQuestion[], values: AnswerValues): OnboardingAnswerInput[] {
+  const edited = new Set(questions.map((question) => asNumber(question.api.id)))
+  const grouped = new Map<number, OnboardingAnswer[]>()
+  for (const row of existing) {
+    const id = asNumber(row.question_id)
+    if (!id || edited.has(id)) continue
+    grouped.set(id, [...(grouped.get(id) ?? []), row])
+  }
+  const kept = new Map<number, OnboardingAnswerInput>()
+  for (const [id, rows] of grouped) {
+    const ids = Array.from(new Set(rows.flatMap((row) => refIds(row)).map((item) => asNumber(item)).filter(Boolean)))
+    const built = inputFromStored(rows[0], ids)
+    if (built) kept.set(id, built)
+  }
+  for (const built of buildProfileAnswers(questions, values).answers) kept.set(built.question_id, built)
+  return [...kept.values()]
+}
+
 function refIds(row: OnboardingAnswer) {
   const raw = row.answer_ref_ids
   if (Array.isArray(raw)) return raw.map((item) => String(item)).filter((id) => id && id !== '0')
