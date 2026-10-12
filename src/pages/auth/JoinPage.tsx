@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { motion } from 'motion/react'
 import { Lock, ShieldCheck, Sparkles, Gift } from 'lucide-react'
 import { Link, Navigate } from 'react-router-dom'
+import { IndustryPanelModal } from '@/components/forms/join/IndustryPanelModal'
 import { JoinHero } from '@/components/forms/join/JoinHero'
 import { JoinSidebar } from '@/components/forms/join/JoinSidebar'
 import { isOtherOption } from '@/components/forms/ConfiguredQuestions'
@@ -13,9 +14,16 @@ import { PersonalStep, PrivacyStep } from '@/components/forms/join/JoinSteps'
 import { EmptyState, ErrorState, LoadingSkeleton } from '@/components/shared/PageState'
 import { Button } from '@/components/ui/button'
 import { joinIncentive, joinTrust } from '@/config/brand'
+import { additionalProfileKinds, additionalProfileLabels, type AdditionalProfileKind } from '@/content/questionnaires'
 import { PROFILE_SECTION_IDS, type ProfileSectionId } from '@/content/profileQuestions'
 import { useAuth } from '@/hooks/useAuth'
 import { useAsync } from '@/hooks/useAsync'
+import {
+  applyIndustryChange,
+  findIndustryQuestion,
+  industryAnswerLabel,
+  panelsForIndustryLabel,
+} from '@/lib/industryPanels'
 import { savePendingOnboarding } from '@/lib/pendingOnboarding'
 import {
   buildConsentAnswers,
@@ -57,12 +65,17 @@ export function JoinPage() {
   const [emailSent, setEmailSent] = useState(false)
   const [emailError, setEmailError] = useState('')
   const [invalidAttempt, setInvalidAttempt] = useState(0)
+  const [panelKinds, setPanelKinds] = useState<AdditionalProfileKind[]>([])
+  const [panelModalOpen, setPanelModalOpen] = useState(false)
   const formRef = useRef<HTMLFormElement>(null)
   const stepSectionRef = useRef<HTMLDivElement>(null)
   const skipInitialScroll = useRef(true)
   const submitInFlight = useRef(false)
   const apiSteps = questionsState.data?.steps
   const sections = useMemo(() => buildProfileSections(apiSteps ?? []), [apiSteps])
+  const industry = useMemo(() => findIndustryQuestion(sections), [sections])
+  const selectedIndustry = industryAnswerLabel(sections, form.answers)
+  const panelOptions = panelsForIndustryLabel(selectedIndustry)
   const flowSteps = registerSteps
   const foundIndex = flowSteps.findIndex((item) => item.id === stepId)
   const stepIndex = foundIndex === -1 ? 0 : foundIndex
@@ -104,6 +117,17 @@ export function JoinPage() {
       const answers = { ...currentForm.answers, [key]: value }
       if (typeof value === 'string' && !key.endsWith('__other') && !isOtherOption(value)) delete answers[`${key}__other`]
       return { ...currentForm, answers }
+    })
+    if (!industry || key !== industry.key) return
+    const label = typeof value === 'string' ? industry.options.find((option) => option.value === value)?.label ?? '' : ''
+    setPanelKinds((current) => applyIndustryChange(current, label).kinds)
+    setPanelModalOpen(applyIndustryChange([], label).open)
+  }
+
+  function togglePanel(kind: AdditionalProfileKind) {
+    setPanelKinds((current) => {
+      const next = current.includes(kind) ? current.filter((item) => item !== kind) : [...current, kind]
+      return additionalProfileKinds.filter((item) => next.includes(item))
     })
   }
 
@@ -254,7 +278,7 @@ export function JoinPage() {
                   transition={{ duration }}
                 >
                     {current.id === 'review' ? (
-                      <ReviewStep form={form} sections={sections} />
+                      <ReviewStep form={form} sections={sections} panelKinds={panelKinds} />
                     ) : current.id === 'account' ? (
                       <PersonalStep form={form} errors={shownErrors} update={update} />
                     ) : current.id === 'privacy' ? (
@@ -267,6 +291,18 @@ export function JoinPage() {
                           errors={shownErrors}
                           onChange={updateAnswer}
                         />
+                        {current.id === 'demographics' && selectedIndustry ? (
+                          <div className="mt-4 flex flex-col items-start gap-2">
+                            <p className="text-sm text-ink-soft">
+                              {panelKinds.length
+                                ? `Selected panels: ${panelKinds.map((kind) => additionalProfileLabels[kind]).join(', ')}`
+                                : 'No additional panels selected.'}
+                            </p>
+                            <Button type="button" variant="outline" onClick={() => setPanelModalOpen(true)}>
+                              Update panel selection
+                            </Button>
+                          </div>
+                        ) : null}
                       </>
                     )}
                 </motion.div>
@@ -296,6 +332,13 @@ export function JoinPage() {
               <div className="mt-5 flex flex-wrap justify-center gap-x-4 gap-y-2 text-xs text-muted">{reassurance}</div>
             </form>
           ) : null}
+          <IndustryPanelModal
+            open={panelModalOpen && panelOptions.length > 0}
+            options={panelOptions}
+            selected={panelKinds}
+            onToggle={togglePanel}
+            onClose={() => setPanelModalOpen(false)}
+          />
           <p className="mt-6 text-center text-sm text-muted">
             Already a member?{' '}
             <Link to="/login" className="font-medium text-brand hover:underline">

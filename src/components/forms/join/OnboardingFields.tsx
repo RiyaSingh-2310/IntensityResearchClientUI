@@ -1,10 +1,10 @@
 import type { ReactNode } from 'react'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Field } from '@/components/ui/field'
-import { Input } from '@/components/ui/input'
+import { Input, ReadOnlyInput } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import { SearchableSelect } from '@/components/forms/SearchableSelect'
-import type { AnswerValue, AnswerValues, FormOption, FormQuestion } from '@/lib/profileQuestions'
+import { answerDisplay, type AnswerValue, type AnswerValues, type FormOption, type FormQuestion } from '@/lib/profileQuestions'
 import { cn } from '@/lib/utils'
 
 function fieldId(question: FormQuestion) {
@@ -69,12 +69,15 @@ export function OnboardingFields({
   errors,
   onChange,
   onBlur,
+  readOnlyKeys = [],
 }: {
   questions: FormQuestion[]
   values: AnswerValues
   errors: Record<string, string>
   onChange: (key: string, value: AnswerValue) => void
   onBlur?: (key: string) => void
+  /** Question ids that stay visible but cannot be changed. */
+  readOnlyKeys?: readonly string[]
 }) {
   return (
     <div className="mt-6 grid gap-6">
@@ -82,6 +85,14 @@ export function OnboardingFields({
         const id = fieldId(question)
         const error = errors[`q-${question.key}`]
         const value = values[question.key]
+
+        if (readOnlyKeys.includes(question.key)) {
+          return (
+            <Field key={question.key} label={question.label} htmlFor={id} required={question.required} hint={question.hint}>
+              <ReadOnlyInput id={id} value={answerDisplay(question, value)} />
+            </Field>
+          )
+        }
 
         if (question.fieldType === 'text') {
           return (

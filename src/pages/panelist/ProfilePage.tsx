@@ -1,14 +1,13 @@
 import { useMemo, useRef, useState, type ReactNode } from 'react'
 import { OnboardingFields } from '@/components/forms/join/OnboardingFields'
 import { PhoneInput } from '@/components/forms/PhoneInput'
-import { SearchableSelect } from '@/components/forms/SearchableSelect'
 import { EmptyState, ErrorState, LoadingSkeleton } from '@/components/shared/PageState'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Field } from '@/components/ui/field'
-import { Input } from '@/components/ui/input'
-import { countries, composePhone, parsePhone } from '@/content/countries'
+import { Input, ReadOnlyInput } from '@/components/ui/input'
+import { composePhone, parsePhone } from '@/content/countries'
 import { PROFILE_SECTION_IDS, profileSectionCopy, type ProfileSectionId } from '@/content/profileQuestions'
 import { useAuth } from '@/hooks/useAuth'
 import { useAsync } from '@/hooks/useAsync'
@@ -31,8 +30,6 @@ import { ApiRequestError } from '@/services/errors'
 
 const PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
 const PHOTO_MAX_BYTES = 2 * 1024 * 1024
-const countryNames = countries.map((country) => country.name).sort((a, b) => a.localeCompare(b))
-
 function todayIso() {
   const date = new Date()
   const month = String(date.getMonth() + 1).padStart(2, '0')
@@ -151,13 +148,14 @@ export function ProfilePage() {
     setSaveError('')
     setMessage('')
     if (target === 'personal') {
-      const next = validatePersonal(form, Boolean(countryQuestion?.required))
+      const next = validatePersonal(form, false)
       setPersonalErrors(next)
       setPersonalTouched({ name: true, country: true, phone: true, dateOfBirth: true })
       if (Object.keys(next).length) return
     }
     if (target !== 'personal') {
-      const nextErrors = validateQuestions(sections[target], form.answers)
+      const editable = sections[target].filter((question) => question.key !== countryQuestion?.key)
+      const nextErrors = validateQuestions(editable, form.answers)
       setSectionErrors((current) => ({ ...current, ...nextErrors }))
       if (Object.keys(nextErrors).length) return
     }
@@ -323,14 +321,7 @@ export function ProfilePage() {
             />
           </Field>
           <Field label="Email Address" htmlFor="profile-email">
-            <Input
-              id="profile-email"
-              value={data.user.email}
-              disabled
-              tabIndex={-1}
-              aria-disabled="true"
-              className="disabled:bg-neutral-100 disabled:text-muted disabled:opacity-100"
-            />
+            <ReadOnlyInput id="profile-email" value={data.user.email} />
           </Field>
           <Field label="Mobile Number (Optional)" htmlFor="profile-phone" error={personalErrors.phone}>
             <PhoneInput
@@ -351,25 +342,8 @@ export function ProfilePage() {
               }}
             />
           </Field>
-          <Field label="Country" htmlFor="profile-country" required={Boolean(countryQuestion?.required)} error={personalErrors.country}>
-            <SearchableSelect
-              id="profile-country"
-              options={countryQuestion ? countryQuestion.options.map((option) => option.label) : countryNames}
-              value={form.country}
-              invalid={Boolean(personalErrors.country)}
-              placeholder="Search countries"
-              onBlur={() => touchPersonal('country')}
-              onChange={(country) => {
-                const option = countryQuestion?.options.find((item) => item.label === country)
-                const next = {
-                  ...form,
-                  country,
-                  answers: option && countryQuestion ? { ...form.answers, [countryQuestion.key]: option.value } : form.answers,
-                }
-                setForm(() => next)
-                if (personalTouched.country || personalErrors.country) syncPersonal(next, 'country')
-              }}
-            />
+          <Field label="Country" htmlFor="profile-country" required={Boolean(countryQuestion?.required)}>
+            <ReadOnlyInput id="profile-country" value={form.country} />
           </Field>
           <Field label="Date of Birth" htmlFor="profile-dob" error={personalErrors.dateOfBirth}>
             <Input
@@ -400,6 +374,7 @@ export function ProfilePage() {
               questions={sections[id]}
               values={form.answers}
               errors={sectionErrors}
+              readOnlyKeys={countryQuestion ? [countryQuestion.key] : []}
               onBlur={(key) => onSectionBlur(sections[id], key)}
               onChange={(key, value) => {
                 updateAnswer(key, value)

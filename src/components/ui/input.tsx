@@ -2,6 +2,21 @@ import { useEffect, useRef, type InputHTMLAttributes } from 'react'
 import { isNumberStepperKey } from '@/lib/lockNumberInputs'
 import { cn } from '@/lib/utils'
 
+/** Same field appearance as `Input`, without focus or editing. */
+export function ReadOnlyInput({ id, value }: { id: string; value: string }) {
+  return (
+    <Input
+      id={id}
+      value={value}
+      readOnly
+      tabIndex={-1}
+      aria-readonly="true"
+      onMouseDown={(event) => event.preventDefault()}
+      onFocus={(event) => event.currentTarget.blur()}
+    />
+  )
+}
+
 export function Input({ className, type = 'text', onKeyDown, ...props }: InputHTMLAttributes<HTMLInputElement>) {
   const ref = useRef<HTMLInputElement>(null)
 

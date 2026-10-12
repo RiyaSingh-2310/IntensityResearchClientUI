@@ -8,6 +8,17 @@ import { apiRequest } from './http'
 export const DUPLICATE_EMAIL_MESSAGE =
   'This email is already registered. Please use a different email address.'
 
+/** Fields accepted by POST /auth/register. Panel types are not part of this contract. */
+export function registerRequestBody(payload: { name: string; email: string; password: string; phone?: string }) {
+  const body: Record<string, string> = {
+    name: payload.name,
+    email: payload.email,
+    password: payload.password,
+  }
+  if (payload.phone) body.phone = payload.phone
+  return body
+}
+
 const verifyInFlight = new Map<string, Promise<undefined>>()
 
 export const SESSION_REJECTED = 'session_rejected'
@@ -78,12 +89,7 @@ export const authService = {
     }
   },
   register(payload: { name: string; email: string; password: string; phone?: string }) {
-    const body: Record<string, string> = {
-      name: payload.name,
-      email: payload.email,
-      password: payload.password,
-    }
-    if (payload.phone) body.phone = payload.phone
+    const body = registerRequestBody(payload)
     // The API sends the activation email. 409 means the email is already registered.
     // Never auto-call /auth/resend-activation. Never persist a registration token as a session.
     return apiRequest<AuthSuccessData | undefined>('/auth/register', {
