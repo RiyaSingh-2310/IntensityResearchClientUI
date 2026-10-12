@@ -19,6 +19,7 @@ import {
   applyProfileAnswer,
   buildAnswerPayload,
   displayProfileAnswer,
+  reconcileProfileAnswers,
   isQuestionVisible,
   panelsFor,
   questionsForPanel,
@@ -271,14 +272,25 @@ function PanelWizard({
   const questionsState = useAsync(() => additionalProfileService.getQuestions(kind), kind)
   const questions = questionsState.data?.questions ?? noQuestions
   const panels = useMemo(() => panelsFor(kind, questions), [kind, questions])
+  const savedAnswers = useMemo(
+    () => reconcileProfileAnswers(questions, initial ? { ...initial } : {}),
+    [questions, initial],
+  )
+  const savedSignature = JSON.stringify(savedAnswers)
+  const [edited, setEdited] = useState(false)
+  const [appliedSignature, setAppliedSignature] = useState(savedSignature)
   const [step, setStep] = useState(0)
-  const [answers, setAnswers] = useState<AdditionalAnswerMap>(initial ? { ...initial } : {})
+  const [answers, setAnswers] = useState<AdditionalAnswerMap>(savedAnswers)
+  if (!edited && appliedSignature !== savedSignature) {
+    setAppliedSignature(savedSignature)
+    setAnswers(savedAnswers)
+  }
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [touched, setTouched] = useState<Record<string, boolean>>({})
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
   const saveInFlight = useRef(false)
-  const dirty = JSON.stringify(answers) !== JSON.stringify(initial ?? {})
+  const dirty = edited
   const panel = panels[step]
   const panelQuestions = useMemo(() => (panel ? questionsForPanel(questions, panel.keys) : []), [panel, questions])
   const lastStep = panels.length > 0 && step === panels.length - 1
@@ -298,6 +310,7 @@ function PanelWizard({
   }, [dirty])
 
   function onChange(key: string, value: string | string[]) {
+    setEdited(true)
     const nextAnswers = applyProfileAnswer(questions, answers, key, value)
     setAnswers(nextAnswers)
     const parentKey = key.replace(/__other$/, '')
@@ -311,6 +324,7 @@ function PanelWizard({
   }
 
   function onToggle(question: ProfileQuestion, optionKey: string) {
+    setEdited(true)
     const nextAnswers = toggleMultiOption(questions, answers, question, optionKey)
     setAnswers(nextAnswers)
     const next = validateProfileQuestions(panelQuestions, nextAnswers)

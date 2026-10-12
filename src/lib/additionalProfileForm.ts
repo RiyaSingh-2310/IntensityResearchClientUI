@@ -241,7 +241,7 @@ function optionKeyFrom(value: unknown) {
   if (typeof value === 'string' || typeof value === 'number') return text(value).trim()
   const record = asRecord(value)
   if (!record) return ''
-  return text(record.option_key || record.key).trim()
+  return text(record.option_key || record.key || record.option_text || record.label || record.name).trim()
 }
 
 function stringList(value: unknown): string[] {
@@ -268,16 +268,18 @@ export function parseAnswerRows(rows: unknown): AdditionalAnswerMap {
     if (!record) continue
     const key = text(record.question_key).trim()
     if (!key) continue
-    const optionKeys = stringList(record.option_keys)
-    const optionKey = text(record.option_key).trim()
+    const nested = asRecord(record.option) ?? asRecord(record.selected_option)
+    const optionKeys = stringList(record.option_keys ?? record.selected_options ?? record.selected_option_keys ?? nested)
+    const optionKey = text(record.option_key || nested?.option_key || nested?.key).trim()
+    const optionLabel = text(record.option_text || nested?.option_text || nested?.label).trim()
     const answerText = text(record.answer_text).trim()
     if (optionKeys.length) {
       multi.set(key, [...(multi.get(key) ?? []), ...optionKeys])
       if (answerText) answers[otherAnswerKey(key)] = answerText
       continue
     }
-    if (optionKey) {
-      multi.set(key, [...(multi.get(key) ?? []), optionKey])
+    if (optionKey || optionLabel) {
+      multi.set(key, [...(multi.get(key) ?? []), optionKey || optionLabel])
       if (answerText) answers[otherAnswerKey(key)] = answerText
       continue
     }
@@ -288,6 +290,30 @@ export function parseAnswerRows(rows: unknown): AdditionalAnswerMap {
     answers[key] = unique.length > 1 ? unique : unique[0] ?? ''
   }
   return answers
+}
+
+function resolveOptionKey(question: ProfileQuestion, value: string) {
+  const trimmed = value.trim()
+  if (!trimmed) return ''
+  const byKey = question.options.find((option) => option.key === trimmed)
+  if (byKey) return byKey.key
+  return question.options.find((option) => option.label.toLowerCase() === trimmed.toLowerCase())?.key ?? ''
+}
+
+/** Maps saved option keys or labels onto the current question options so edit controls show the stored choice. */
+export function reconcileProfileAnswers(questions: ProfileQuestion[], answers: AdditionalAnswerMap): AdditionalAnswerMap {
+  const next: AdditionalAnswerMap = { ...answers }
+  for (const question of questions) {
+    if (question.fieldType === 'text') {
+      const value = next[question.key]
+      if (Array.isArray(value)) next[question.key] = value.join(', ')
+      continue
+    }
+    const keys = Array.from(new Set(selectedKeys(next[question.key]).map((value) => resolveOptionKey(question, value)).filter(Boolean)))
+    if (!keys.length) continue
+    next[question.key] = question.fieldType === 'multi' ? keys : keys[0]
+  }
+  return next
 }
 
 export function displayProfileAnswer(question: ProfileQuestion, answers: AdditionalAnswerMap) {

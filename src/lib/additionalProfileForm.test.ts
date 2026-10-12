@@ -8,11 +8,12 @@ import {
   parseAnswerRows,
   parseProfileQuestions,
   parseProfileSummaries,
+  reconcileProfileAnswers,
   toggleMultiOption,
   validateProfileQuestions,
   type ProfileQuestion,
 } from './additionalProfileForm'
-import { answersForSave, type FormQuestion } from './profileQuestions'
+import { answersForSave, answersToFormValues, type FormQuestion } from './profileQuestions'
 import type { OnboardingAnswer } from '@/types/api'
 
 const questions: ProfileQuestion[] = [
@@ -166,6 +167,33 @@ assert.deepEqual(answersForSave(savedAnswers, [edited], { '9': ['3'] }), [
   { question_id: 10, answer_ref_id: 86 },
   { question_id: 9, answer_ref_ids: [3] },
 ])
+
+assert.deepEqual(
+  reconcileProfileAnswers(questions, { licensed: 'Yes', conditions: 'Asthma', license_number: 'AB-1' }),
+  { licensed: 'yes', conditions: ['asthma'], license_number: 'AB-1' },
+)
+assert.deepEqual(reconcileProfileAnswers(questions, {}), {})
+assert.deepEqual(parseAnswerRows([{ question_key: 'licensed', option: { option_text: 'Yes' } }]), { licensed: 'Yes' })
+
+const ageQuestion = {
+  key: '1',
+  section: 'demographics',
+  label: 'Age',
+  fieldType: 'dropdown',
+  required: true,
+  options: [{ value: '6', label: '25-34' }],
+  api: { id: 1, step_no: 2, question_text: 'Age', field_type: 'dropdown', dropdown_category: 'AgeRange', is_required: 1, options: [{ id: 6, name: '25-34' }] },
+} satisfies FormQuestion
+assert.deepEqual(
+  answersToFormValues(
+    [
+      { id: '1', question_id: '1', question_text: 'Age', step_no: '2', field_type: 'dropdown', answer_text: '25-34', answer_ref_id: '99', created_at: '' },
+      { id: '2', question_id: '9', question_text: 'Topics', step_no: '4', field_type: 'checkbox', answer_text: '', answer_ref_id: '0', answer_ref_ids: '3,4', created_at: '' },
+    ],
+    [ageQuestion, { ...edited, options: [{ value: '3', label: 'Health' }, { value: '4', label: 'Tech' }] }],
+  ),
+  { '1': '6', '9': ['3', '4'] },
+)
 
 const panels = panelsFor('patient', [
   { ...questions[2], key: 'conditions', order: 1 },

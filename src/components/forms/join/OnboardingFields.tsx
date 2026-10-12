@@ -132,7 +132,7 @@ export function OnboardingFields({
         }
 
         if (question.fieldType === 'checkbox') {
-          const selected = Array.isArray(value) ? value : []
+          const selected = Array.isArray(value) ? value : typeof value === 'string' && value ? [value] : []
           return (
             <ChoiceGroup key={question.key} id={id} label={question.label} required={question.required} hint={question.hint} error={error}>
               <div className="grid gap-2 sm:grid-cols-2">
@@ -158,7 +158,7 @@ export function OnboardingFields({
           <ChoiceGroup key={question.key} id={id} label={question.label} required={question.required} hint={question.hint} error={error}>
             <div className="grid gap-2 sm:grid-cols-2">
               {question.options.map((option) => {
-                const checked = value === option.value
+                const checked = value === option.value || (Array.isArray(value) && value.includes(option.value))
                 return (
                   <label key={option.value} className={cn(optionClass, 'rounded-2xl', checked ? 'border-brand bg-brand-soft/50' : 'border-line')}>
                     <input

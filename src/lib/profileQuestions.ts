@@ -182,8 +182,21 @@ function refIds(row: OnboardingAnswer) {
       /* The API may send a plain id instead of a JSON list. */
     }
   }
+  if (typeof raw === 'string' && raw.includes(',')) {
+    return raw.split(',').map((item) => item.trim()).filter((id) => id && id !== '0')
+  }
   const single = String(row.answer_ref_id ?? '')
   return single && single !== '0' ? [single] : []
+}
+
+function optionValue(question: FormQuestion, token: string) {
+  const trimmed = token.trim()
+  if (!trimmed || trimmed === '0') return ''
+  return (
+    question.options.find((option) => option.value === trimmed)?.value ??
+    question.options.find((option) => option.label.toLowerCase() === trimmed.toLowerCase())?.value ??
+    ''
+  )
 }
 
 export function answersToFormValues(answers: OnboardingAnswer[], questions: FormQuestion[]): AnswerValues {
@@ -198,17 +211,14 @@ export function answersToFormValues(answers: OnboardingAnswer[], questions: Form
       continue
     }
 
-    const selected = rows.flatMap((row) => refIds(row))
-    if (!selected.length) {
-      const byName = rows
-        .flatMap((row) => String(row.answer_text ?? '').split(',').map((item) => item.trim()).filter(Boolean))
-        .map((name) => question.options.find((option) => option.label.toLowerCase() === name.toLowerCase())?.value)
-        .filter((item): item is string => Boolean(item))
-      if (byName.length) values[question.key] = question.fieldType === 'checkbox' ? Array.from(new Set(byName)) : byName[0]
-      continue
-    }
-    if (!selected.length) continue
-    values[question.key] = question.fieldType === 'checkbox' ? Array.from(new Set(selected)) : selected[0]
+    const fromRefs = rows.flatMap((row) => refIds(row)).map((id) => optionValue(question, id)).filter(Boolean)
+    const fromText = rows
+      .flatMap((row) => String(row.answer_text ?? '').split(',').map((item) => item.trim()).filter(Boolean))
+      .map((name) => optionValue(question, name))
+      .filter(Boolean)
+    const chosen = Array.from(new Set(fromRefs.length ? fromRefs : fromText))
+    if (!chosen.length) continue
+    values[question.key] = question.fieldType === 'checkbox' ? chosen : chosen[0]
   }
   return values
 }
