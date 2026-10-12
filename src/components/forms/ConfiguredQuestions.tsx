@@ -1,5 +1,7 @@
+import { useState } from 'react'
 import { countries } from '@/content/countries'
 import { visibleQuestions, type QuestionnaireAnswers, type QuestionnaireQuestion } from '@/content/questionnaires'
+import { countError, countMaxDigits, isCountQuestion, rejectedCountMessage, sanitizeCount } from '@/lib/countField'
 import { Field } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -38,6 +40,9 @@ export function validateConfiguredQuestions(questions: QuestionnaireQuestion[], 
     const selection = question.fieldType === 'dropdown' || question.fieldType === 'dropdown-open' || question.fieldType === 'radio'
     if (question.required && !value) {
       errors[questionErrorKey(question.key)] = selection ? 'Please select an option.' : 'Please answer this question.'
+    } else if (question.fieldType === 'text' && isCountQuestion(question.label)) {
+      const message = countError(value, countMaxDigits(question.label))
+      if (message) errors[questionErrorKey(question.key)] = message
     } else if (hasOtherChoice(question) && isOtherOption(value) && !other) {
       errors[questionErrorKey(question.key)] = 'Please specify your answer.'
     }
@@ -66,6 +71,7 @@ export function ConfiguredQuestions({
   onChange: (key: string, value: string) => void
   onBlur?: (key: string) => void
 }) {
+  const [countHints, setCountHints] = useState<Record<string, string>>({})
   const shown = visibleQuestions(questions, answers)
 
   function changeAnswer(question: QuestionnaireQuestion, next: string) {
@@ -117,11 +123,29 @@ export function ConfiguredQuestions({
                 ) : null}
               </fieldset>
             ) : question.fieldType === 'text' || question.fieldType === 'textarea' ? (
-              <Field label={question.label} htmlFor={id} required={question.required} error={fieldError}>
+              <Field label={question.label} htmlFor={id} required={question.required} error={countHints[question.key] || fieldError}>
                 {question.fieldType === 'textarea' ? (
                   <Textarea id={id} value={value} placeholder={placeholderFor(question)} onBlur={() => onBlur?.(question.key)} onChange={(event) => changeAnswer(question, event.target.value)} />
                 ) : (
-                  <Input id={id} value={value} placeholder={placeholderFor(question)} onBlur={() => onBlur?.(question.key)} onChange={(event) => changeAnswer(question, event.target.value)} />
+                  <Input
+                    id={id}
+                    type="text"
+                    inputMode={isCountQuestion(question.label) ? 'numeric' : undefined}
+                    maxLength={isCountQuestion(question.label) ? countMaxDigits(question.label) : undefined}
+                    value={value}
+                    placeholder={placeholderFor(question)}
+                    onBlur={() => onBlur?.(question.key)}
+                    onChange={(event) => {
+                      const raw = event.target.value
+                      const count = isCountQuestion(question.label)
+                      const digits = countMaxDigits(question.label)
+                      if (count) {
+                        const message = rejectedCountMessage(raw, digits)
+                        setCountHints((current) => ((current[question.key] ?? '') === message ? current : { ...current, [question.key]: message }))
+                      }
+                      changeAnswer(question, count ? sanitizeCount(raw, digits) : raw)
+                    }}
+                  />
                 )}
               </Field>
             ) : (

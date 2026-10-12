@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { PasswordField } from '@/components/forms/PasswordField'
 import { PhoneInput } from '@/components/forms/PhoneInput'
@@ -7,19 +7,28 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Field } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { paths } from '@/config/paths'
-import { NAME_MAX_LENGTH, PHONE_MAX_DIGITS } from '@/lib/validation'
+import { NAME_MAX_LENGTH, PHONE_MAX_DIGITS, rejectedNameMessage, sanitizeName } from '@/lib/validation'
 import type { RegisterPayload } from '@/types/auth'
 
 interface StepProps {
   form: RegisterPayload
   errors: Record<string, string>
   update: <K extends keyof RegisterPayload>(key: K, value: RegisterPayload[K]) => void
+  onBlur?: (key: string) => void
 }
 
-export function PersonalStep({ form, errors, update }: StepProps) {
+export function PersonalStep({ form, errors, update, onBlur }: StepProps) {
+  const [rejected, setRejected] = useState({ firstName: '', lastName: '' })
+
+  function changeName(key: 'firstName' | 'lastName', raw: string) {
+    update(key, sanitizeName(raw))
+    const message = rejectedNameMessage(raw)
+    setRejected((current) => (current[key] === message ? current : { ...current, [key]: message }))
+  }
+
   return (
     <div className="mt-6 grid gap-5 sm:grid-cols-2">
-      <Field label="First name" htmlFor="firstName" required error={errors.firstName}>
+      <Field label="First name" htmlFor="firstName" required error={rejected.firstName || errors.firstName}>
         <Input
           id="firstName"
           placeholder="First name"
@@ -27,10 +36,14 @@ export function PersonalStep({ form, errors, update }: StepProps) {
           aria-required="true"
           maxLength={NAME_MAX_LENGTH}
           value={form.firstName}
-          onChange={(event) => update('firstName', event.target.value)}
+          onBlur={(event) => {
+            update('firstName', event.currentTarget.value.trim())
+            onBlur?.('firstName')
+          }}
+          onChange={(event) => changeName('firstName', event.target.value)}
         />
       </Field>
-      <Field label="Last name" htmlFor="lastName" required error={errors.lastName}>
+      <Field label="Last name" htmlFor="lastName" required error={rejected.lastName || errors.lastName}>
         <Input
           id="lastName"
           placeholder="Last name"
@@ -38,7 +51,11 @@ export function PersonalStep({ form, errors, update }: StepProps) {
           aria-required="true"
           maxLength={NAME_MAX_LENGTH}
           value={form.lastName}
-          onChange={(event) => update('lastName', event.target.value)}
+          onBlur={(event) => {
+            update('lastName', event.currentTarget.value.trim())
+            onBlur?.('lastName')
+          }}
+          onChange={(event) => changeName('lastName', event.target.value)}
         />
       </Field>
       <Field label="Email address" htmlFor="email" required error={errors.email} className="sm:col-span-2">
@@ -49,6 +66,7 @@ export function PersonalStep({ form, errors, update }: StepProps) {
           aria-required="true"
           placeholder="you@email.com"
           value={form.email}
+          onBlur={() => onBlur?.('email')}
           onChange={(event) => update('email', event.target.value)}
         />
       </Field>
@@ -60,16 +78,17 @@ export function PersonalStep({ form, errors, update }: StepProps) {
           maxDigits={PHONE_MAX_DIGITS}
           onCountryChange={(value) => update('phoneCountry', value)}
           onNumberChange={(value) => update('phone', value)}
+          onBlur={() => onBlur?.('phone')}
         />
       </Field>
       <Field label="Password" htmlFor="password" required error={errors.password} hint="At least 8 characters, with a letter and a number." className="sm:col-span-2">
-        <PasswordField id="password" autoComplete="new-password" aria-required="true" value={form.password} onChange={(event) => update('password', event.target.value)} />
+        <PasswordField id="password" autoComplete="new-password" aria-required="true" value={form.password} onBlur={() => onBlur?.('password')} onChange={(event) => update('password', event.target.value)} />
       </Field>
       <div className="sm:col-span-2">
         <PasswordStrength password={form.password} />
       </div>
       <Field label="Confirm password" htmlFor="confirmPassword" required error={errors.confirmPassword} className="sm:col-span-2">
-        <PasswordField id="confirmPassword" autoComplete="new-password" aria-required="true" value={form.confirmPassword} onChange={(event) => update('confirmPassword', event.target.value)} />
+        <PasswordField id="confirmPassword" autoComplete="new-password" aria-required="true" value={form.confirmPassword} onBlur={() => onBlur?.('confirmPassword')} onChange={(event) => update('confirmPassword', event.target.value)} />
       </Field>
     </div>
   )
@@ -158,7 +177,7 @@ function PolicyLink({ to, children }: { to: string; children: ReactNode }) {
   )
 }
 
-export function PrivacyStep({ form, errors, update }: StepProps) {
+export function PrivacyStep({ form, errors, update, onBlur }: StepProps) {
   return (
     <div className="mt-6 grid gap-6">
       <ConsentGroup legend="Terms & Conditions" required error={errors.acceptTerms} errorId="acceptTerms-error" className={consentCardClass}>
@@ -167,7 +186,10 @@ export function PrivacyStep({ form, errors, update }: StepProps) {
           required
           error={errors.acceptTerms}
           checked={form.acceptTerms}
-          onChange={(value) => update('acceptTerms', value)}
+          onChange={(value) => {
+            update('acceptTerms', value)
+            onBlur?.('acceptTerms')
+          }}
         >
           I accept the Intensity Research <PolicyLink to={paths.termsConditions}>Terms &amp; Conditions</PolicyLink> and{' '}
           <PolicyLink to={paths.privacyPolicy}>Privacy Policy</PolicyLink>.
@@ -180,7 +202,10 @@ export function PrivacyStep({ form, errors, update }: StepProps) {
           required
           error={errors.acceptPrivacy}
           checked={form.acceptPrivacy}
-          onChange={(value) => update('acceptPrivacy', value)}
+          onChange={(value) => {
+            update('acceptPrivacy', value)
+            onBlur?.('acceptPrivacy')
+          }}
         >
           I consent to Intensity Research using and sharing my profile information for panel membership and research
           purposes, as described in the <PolicyLink to={paths.privacyPolicy}>Privacy Policy</PolicyLink>.

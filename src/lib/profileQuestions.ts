@@ -8,6 +8,8 @@ import {
 } from '@/content/profileQuestions'
 import type { OnboardingAnswer, OnboardingAnswerInput, OnboardingQuestion, OnboardingStepGroup } from '@/types/api'
 import { findYesNoId, flattenQuestions } from './apiMap'
+import { countError, countMaxDigits, isCountQuestion } from './countField'
+import { isPostalQuestionLabel, postalCodeError } from './postalCode'
 import { asNumber } from './utils'
 
 export type AnswerValue = string | string[]
@@ -57,7 +59,6 @@ function fromApi(question: OnboardingQuestion, section: ProfileSectionId): FormQ
     key: String(question.id),
     section,
     label: question.question_text,
-    hint: fieldType === 'checkbox' ? 'Select all that apply' : undefined,
     fieldType,
     required: Boolean(asNumber(question.is_required)),
     options: question.options.map((option) => ({ value: String(option.id), label: option.name })),
@@ -80,8 +81,15 @@ export function hasAnswer(value: AnswerValue | undefined) {
   return typeof value === 'string' && value.trim().length > 0
 }
 
+const COUNTRY_QUESTION = normalizeLabel('Which country do you currently live or work in?')
+
+export function isCountryQuestion(question: FormQuestion) {
+  return question.api.dropdown_category?.toLowerCase() === 'country' || normalizeLabel(question.label) === COUNTRY_QUESTION
+}
+
 export function validateQuestions(questions: FormQuestion[], values: AnswerValues) {
   const errors: Record<string, string> = {}
+  const countryQuestion = questions.find((question) => isCountryQuestion(question))
   for (const question of questions) {
     const value = values[question.key]
     if (question.required && !hasAnswer(value)) {
@@ -93,8 +101,17 @@ export function validateQuestions(questions: FormQuestion[], values: AnswerValue
             : 'Please select an option.'
       continue
     }
-    if (question.fieldType === 'text' && typeof value === 'string' && question.maxLength && value.trim().length > question.maxLength) {
+    if (question.fieldType === 'text' && typeof value === 'string' && value.trim() && isCountQuestion(question.label)) {
+      const message = countError(value, countMaxDigits(question.label))
+      if (message) errors[`q-${question.key}`] = message
+    } else if (question.fieldType === 'text' && typeof value === 'string' && question.maxLength && value.trim().length > question.maxLength) {
       errors[`q-${question.key}`] = `Please use ${question.maxLength} characters or fewer.`
+    }
+    if (isPostalQuestionLabel(question.label) && typeof value === 'string' && value.trim() && countryQuestion) {
+      const countryValue = values[countryQuestion.key]
+      const countryLabel = typeof countryValue === 'string' ? optionLabel(countryQuestion, countryValue) : ''
+      const postalError = postalCodeError(countryLabel, value)
+      if (postalError) errors[`q-${question.key}`] = postalError
     }
   }
   return errors

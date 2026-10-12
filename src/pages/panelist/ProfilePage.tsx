@@ -22,7 +22,7 @@ import {
   type FormQuestion,
 } from '@/lib/profileQuestions'
 import { formatDate, initials, mediaUrl, omitKey } from '@/lib/utils'
-import { PHONE_MAX_DIGITS, validatePhone } from '@/lib/validation'
+import { NAME_ERROR, NAME_PATTERN, PHONE_MAX_DIGITS, rejectedNameMessage, sanitizeName, validatePhone } from '@/lib/validation'
 import { authService } from '@/services/auth.service'
 import { onboardingService } from '@/services/onboarding.service'
 import { panelistService } from '@/services/panelist.service'
@@ -54,6 +54,7 @@ function validatePersonal(
 ) {
   const errors: Record<string, string> = {}
   if (!form.name.trim()) errors.name = 'Full Name is required.'
+  else if (!NAME_PATTERN.test(form.name.trim())) errors.name = NAME_ERROR
   if (countryRequired && !form.country.trim()) errors.country = 'Country is required.'
   const phoneError = validatePhone(form.phoneCountry, form.phone)
   if (phoneError) errors.phone = phoneError
@@ -313,9 +314,16 @@ export function ProfilePage() {
               value={form.name}
               onBlur={() => touchPersonal('name')}
               onChange={(event) => {
-                const name = event.target.value
+                const raw = event.target.value
+                const name = sanitizeName(raw, 100)
                 const next = { ...form, name }
                 setForm(() => next)
+                const rejected = rejectedNameMessage(raw, 100)
+                if (rejected) {
+                  setPersonalTouched((current) => ({ ...current, name: true }))
+                  setPersonalErrors((current) => ({ ...current, name: rejected }))
+                  return
+                }
                 syncPersonal(next, 'name')
               }}
             />

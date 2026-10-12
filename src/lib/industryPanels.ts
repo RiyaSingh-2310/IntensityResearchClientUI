@@ -1,4 +1,4 @@
-import { additionalProfileKinds, type AdditionalProfileKind } from '@/content/questionnaires'
+import type { AdditionalProfileKind } from '@/content/questionnaires'
 import { PROFILE_SECTION_IDS } from '@/content/profileQuestions'
 import { normalizeLabel, optionLabel, type ProfileSections } from '@/lib/profileQuestions'
 
@@ -36,25 +36,3 @@ export function industryAnswerLabel(sections: ProfileSections, answers: Record<s
   return typeof value === 'string' && value ? optionLabel(question, value) : ''
 }
 
-export function prunePanelSelection(selected: readonly AdditionalProfileKind[], allowed: readonly AdditionalProfileKind[]) {
-  return additionalProfileKinds.filter((kind) => selected.includes(kind) && allowed.includes(kind))
-}
-
-/**
- * Industry change during registration.
- * An empty label is the search field clearing before a new option is chosen, so current selections stay.
- * A real industry opens the popup and drops panels that industry cannot offer.
- */
-export function applyIndustryChange(selected: readonly AdditionalProfileKind[], label: string) {
-  const nextLabel = label.trim()
-  if (!nextLabel) {
-    return {
-      open: false,
-      kinds: additionalProfileKinds.filter((kind) => selected.includes(kind)),
-    }
-  }
-  return {
-    open: true,
-    kinds: prunePanelSelection(selected, panelsForIndustryLabel(nextLabel)),
-  }
-}

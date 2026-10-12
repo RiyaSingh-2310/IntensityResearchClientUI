@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { motion } from 'motion/react'
 import { Lock, ShieldCheck, Sparkles, Gift } from 'lucide-react'
 import { Link, Navigate } from 'react-router-dom'
-import { IndustryPanelModal } from '@/components/forms/join/IndustryPanelModal'
 import { JoinHero } from '@/components/forms/join/JoinHero'
 import { JoinSidebar } from '@/components/forms/join/JoinSidebar'
 import { isOtherOption } from '@/components/forms/ConfiguredQuestions'
@@ -14,16 +13,9 @@ import { PersonalStep, PrivacyStep } from '@/components/forms/join/JoinSteps'
 import { EmptyState, ErrorState, LoadingSkeleton } from '@/components/shared/PageState'
 import { Button } from '@/components/ui/button'
 import { joinIncentive, joinTrust } from '@/config/brand'
-import { additionalProfileKinds, additionalProfileLabels, type AdditionalProfileKind } from '@/content/questionnaires'
 import { PROFILE_SECTION_IDS, type ProfileSectionId } from '@/content/profileQuestions'
 import { useAuth } from '@/hooks/useAuth'
 import { useAsync } from '@/hooks/useAsync'
-import {
-  applyIndustryChange,
-  findIndustryQuestion,
-  industryAnswerLabel,
-  panelsForIndustryLabel,
-} from '@/lib/industryPanels'
 import { savePendingOnboarding } from '@/lib/pendingOnboarding'
 import {
   buildConsentAnswers,
@@ -65,28 +57,23 @@ export function JoinPage() {
   const [emailSent, setEmailSent] = useState(false)
   const [emailError, setEmailError] = useState('')
   const [invalidAttempt, setInvalidAttempt] = useState(0)
-  const [panelKinds, setPanelKinds] = useState<AdditionalProfileKind[]>([])
-  const [panelModalOpen, setPanelModalOpen] = useState(false)
+  const [touched, setTouched] = useState<Record<string, boolean>>({})
   const formRef = useRef<HTMLFormElement>(null)
   const stepSectionRef = useRef<HTMLDivElement>(null)
   const skipInitialScroll = useRef(true)
   const submitInFlight = useRef(false)
   const apiSteps = questionsState.data?.steps
   const sections = useMemo(() => buildProfileSections(apiSteps ?? []), [apiSteps])
-  const industry = useMemo(() => findIndustryQuestion(sections), [sections])
-  const selectedIndustry = industryAnswerLabel(sections, form.answers)
-  const panelOptions = panelsForIndustryLabel(selectedIndustry)
   const flowSteps = registerSteps
   const foundIndex = flowSteps.findIndex((item) => item.id === stepId)
   const stepIndex = foundIndex === -1 ? 0 : foundIndex
   const current = flowSteps[stepIndex] ?? flowSteps[0]
   const isLast = stepIndex === flowSteps.length - 1
   const liveErrors = isLast ? validateRegisterForm(form, sections, flowSteps) : validateRegisterStep(form, current.id, sections)
-  const baseErrors = Object.keys(errors).length ? liveErrors : {}
+  const stepReady = Object.keys(liveErrors).length === 0
+  const revealed = Object.fromEntries(Object.entries(liveErrors).filter(([key]) => touched[key] || errors[key]))
   const shownErrors =
-    emailAvailabilityError && !baseErrors.email
-      ? { ...baseErrors, email: emailAvailabilityError }
-      : baseErrors
+    emailAvailabilityError && !revealed.email ? { ...revealed, email: emailAvailabilityError } : revealed
 
   useEffect(() => {
     if (skipInitialScroll.current) {
@@ -112,22 +99,15 @@ export function JoinPage() {
     if (key === 'email') setEmailAvailabilityError('')
   }
 
+  function touch(key: string) {
+    setTouched((current) => (current[key] ? current : { ...current, [key]: true }))
+  }
+
   function updateAnswer(key: string, value: AnswerValue) {
     setForm((currentForm) => {
       const answers = { ...currentForm.answers, [key]: value }
       if (typeof value === 'string' && !key.endsWith('__other') && !isOtherOption(value)) delete answers[`${key}__other`]
       return { ...currentForm, answers }
-    })
-    if (!industry || key !== industry.key) return
-    const label = typeof value === 'string' ? industry.options.find((option) => option.value === value)?.label ?? '' : ''
-    setPanelKinds((current) => applyIndustryChange(current, label).kinds)
-    setPanelModalOpen(applyIndustryChange([], label).open)
-  }
-
-  function togglePanel(kind: AdditionalProfileKind) {
-    setPanelKinds((current) => {
-      const next = current.includes(kind) ? current.filter((item) => item !== kind) : [...current, kind]
-      return additionalProfileKinds.filter((item) => next.includes(item))
     })
   }
 
@@ -142,6 +122,7 @@ export function JoinPage() {
     if (submitting) return
     const nextErrors = validateRegisterStep(form, current.id, sections)
     setErrors(nextErrors)
+    setTouched((currentTouched) => ({ ...currentTouched, ...Object.fromEntries(Object.keys(nextErrors).map((key) => [key, true])) }))
     if (Object.keys(nextErrors).length) {
       setInvalidAttempt((count) => count + 1)
       return
@@ -173,6 +154,7 @@ export function JoinPage() {
     if (submitInFlight.current) return
     const nextErrors = validateRegisterForm(form, sections, flowSteps)
     setErrors(nextErrors)
+    setTouched((current) => ({ ...current, ...Object.fromEntries(Object.keys(nextErrors).map((key) => [key, true])) }))
     if (Object.keys(nextErrors).length) {
       const invalidIndex = firstInvalidStep(form, sections, flowSteps)
       if (invalidIndex === stepIndex) setInvalidAttempt((count) => count + 1)
@@ -278,32 +260,19 @@ export function JoinPage() {
                   transition={{ duration }}
                 >
                     {current.id === 'review' ? (
-                      <ReviewStep form={form} sections={sections} panelKinds={panelKinds} />
+                      <ReviewStep form={form} sections={sections} />
                     ) : current.id === 'account' ? (
-                      <PersonalStep form={form} errors={shownErrors} update={update} />
+                      <PersonalStep form={form} errors={shownErrors} update={update} onBlur={touch} />
                     ) : current.id === 'privacy' ? (
-                      <PrivacyStep form={form} errors={shownErrors} update={update} />
+                      <PrivacyStep form={form} errors={shownErrors} update={update} onBlur={touch} />
                     ) : (
-                      <>
-                        <OnboardingFields
-                          questions={sections[current.id]}
-                          values={form.answers}
-                          errors={shownErrors}
-                          onChange={updateAnswer}
-                        />
-                        {current.id === 'demographics' && selectedIndustry ? (
-                          <div className="mt-4 flex flex-col items-start gap-2">
-                            <p className="text-sm text-ink-soft">
-                              {panelKinds.length
-                                ? `Selected panels: ${panelKinds.map((kind) => additionalProfileLabels[kind]).join(', ')}`
-                                : 'No additional panels selected.'}
-                            </p>
-                            <Button type="button" variant="outline" onClick={() => setPanelModalOpen(true)}>
-                              Update panel selection
-                            </Button>
-                          </div>
-                        ) : null}
-                      </>
+                      <OnboardingFields
+                        questions={sections[current.id]}
+                        values={form.answers}
+                        errors={shownErrors}
+                        onChange={updateAnswer}
+                        onBlur={(key) => touch(`q-${key}`)}
+                      />
                     )}
                 </motion.div>
               </div>
@@ -317,11 +286,11 @@ export function JoinPage() {
                   Back
                 </Button>
                 {isLast ? (
-                  <Button type="submit" disabled={submitting} className="sm:min-w-64">
+                  <Button type="submit" disabled={submitting || !stepReady} className="sm:min-w-64">
                     {submitting ? 'Creating your profile…' : 'Complete Registration'}
                   </Button>
                 ) : (
-                  <Button type="button" disabled={submitting} onClick={goNext}>
+                  <Button type="button" disabled={submitting || !stepReady} onClick={goNext}>
                     Continue
                   </Button>
                 )}
@@ -332,13 +301,6 @@ export function JoinPage() {
               <div className="mt-5 flex flex-wrap justify-center gap-x-4 gap-y-2 text-xs text-muted">{reassurance}</div>
             </form>
           ) : null}
-          <IndustryPanelModal
-            open={panelModalOpen && panelOptions.length > 0}
-            options={panelOptions}
-            selected={panelKinds}
-            onToggle={togglePanel}
-            onClose={() => setPanelModalOpen(false)}
-          />
           <p className="mt-6 text-center text-sm text-muted">
             Already a member?{' '}
             <Link to="/login" className="font-medium text-brand hover:underline">

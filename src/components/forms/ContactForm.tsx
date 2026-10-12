@@ -5,7 +5,7 @@ import { Field } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { omitKey } from '@/lib/utils'
-import { EMAIL_PATTERN, NAME_MAX_LENGTH, NAME_PATTERN } from '@/lib/validation'
+import { EMAIL_PATTERN, NAME_ERROR, NAME_MAX_LENGTH, NAME_PATTERN, rejectedNameMessage, sanitizeName } from '@/lib/validation'
 import { ApiRequestError } from '@/services/errors'
 import { contactService } from '@/services/contact.service'
 
@@ -30,10 +30,12 @@ export function ContactForm({
   const inFlight = useRef(false)
 
   const edit =
-    (key: string, setter: (value: string) => void) =>
+    (key: string, setter: (value: string) => void, reject?: (raw: string) => string) =>
     (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-      setter(event.target.value)
-      setErrors((current) => omitKey(current, key))
+      const raw = event.target.value
+      setter(raw)
+      const message = reject?.(raw) ?? ''
+      setErrors((current) => (message ? { ...current, [key]: message } : omitKey(current, key)))
     }
 
   function splitName(full: string) {
@@ -73,10 +75,10 @@ export function ContactForm({
     if (layout === 'full') {
       if (!names.firstName) next.firstName = 'Please enter your first name.'
       else if (names.firstName.length > NAME_MAX_LENGTH) next.firstName = 'First name must be 30 characters or fewer.'
-      else if (!NAME_PATTERN.test(names.firstName)) next.firstName = 'Enter a valid first name.'
+      else if (!NAME_PATTERN.test(names.firstName)) next.firstName = NAME_ERROR
       if (!names.lastName) next.lastName = 'Please enter your last name.'
       else if (names.lastName.length > NAME_MAX_LENGTH) next.lastName = 'Last name must be 30 characters or fewer.'
-      else if (!NAME_PATTERN.test(names.lastName)) next.lastName = 'Enter a valid last name.'
+      else if (!NAME_PATTERN.test(names.lastName)) next.lastName = NAME_ERROR
     } else if (!name.trim()) {
       next.name = 'Please enter your name.'
     } else if (!names.lastName) {
@@ -146,7 +148,8 @@ export function ContactForm({
               maxLength={NAME_MAX_LENGTH}
               placeholder="Enter your first name"
               value={firstName}
-              onChange={edit('firstName', setFirstName)}
+              onBlur={() => setFirstName((current) => current.trim())}
+              onChange={edit('firstName', (value) => setFirstName(sanitizeName(value)), rejectedNameMessage)}
             />
           </Field>
           <Field label="Last Name" htmlFor={`${idPrefix}-last`} required error={errors.lastName}>
@@ -156,7 +159,8 @@ export function ContactForm({
               maxLength={NAME_MAX_LENGTH}
               placeholder="Enter your last name"
               value={lastName}
-              onChange={edit('lastName', setLastName)}
+              onBlur={() => setLastName((current) => current.trim())}
+              onChange={edit('lastName', (value) => setLastName(sanitizeName(value)), rejectedNameMessage)}
             />
           </Field>
         </div>
@@ -168,7 +172,12 @@ export function ContactForm({
               autoComplete="name"
               placeholder="Your full name"
               value={name}
-              onChange={edit('name', setName)}
+              onBlur={() => setName((current) => current.trim())}
+              onChange={edit(
+                'name',
+                (value) => setName(sanitizeName(value, NAME_MAX_LENGTH * 2 + 1)),
+                (raw) => rejectedNameMessage(raw, NAME_MAX_LENGTH * 2 + 1),
+              )}
             />
           </Field>
           <Field label="Email" htmlFor={`${idPrefix}-email`} required error={errors.email}>

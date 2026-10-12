@@ -11,6 +11,7 @@ import {
   type AdditionalAnswerMap,
   type ProfileQuestion,
 } from '@/lib/additionalProfileForm'
+import { countMaxDigits, isCountQuestion, rejectedCountMessage, sanitizeCount } from '@/lib/countField'
 import { SearchableSelect } from './SearchableSelect'
 
 const RADIO_LIMIT = 8
@@ -64,6 +65,7 @@ function ProfileField({
   onToggle: (question: ProfileQuestion, optionKey: string) => void
   onBlur?: (key: string) => void
 }) {
+  const [countHint, setCountHint] = useState('')
   const id = question.key
   const other = question.options.find((option) => option.isOther)
   const selected = selectedKeys(answers[question.key])
@@ -74,14 +76,23 @@ function ProfileField({
 
   if (question.fieldType === 'text') {
     const value = typeof answers[question.key] === 'string' ? answers[question.key] : ''
+    const count = isCountQuestion(question.label)
+    const digits = count ? countMaxDigits(question.label) : undefined
     return (
-      <Field label={question.label} htmlFor={id} required={question.required} error={error}>
+      <Field label={question.label} htmlFor={id} required={question.required} error={countHint || error}>
         <Input
           id={id}
+          type="text"
+          inputMode={count ? 'numeric' : undefined}
+          maxLength={digits}
           value={value}
-          placeholder="Enter your answer"
+          placeholder={count ? 'Enter a number' : 'Enter your answer'}
           onBlur={() => onBlur?.(question.key)}
-          onChange={(event) => onChange(question.key, event.target.value)}
+          onChange={(event) => {
+            const raw = event.target.value
+            if (count) setCountHint(rejectedCountMessage(raw, digits ?? 7))
+            onChange(question.key, count ? sanitizeCount(raw, digits ?? 7) : raw)
+          }}
         />
       </Field>
     )
@@ -211,7 +222,6 @@ function MultiField({
         {question.label}
         {question.required ? <span className="ml-1 text-danger" aria-hidden="true">*</span> : null}
       </legend>
-      <p className="text-xs text-muted">Select all that apply</p>
       {question.options.length > RADIO_LIMIT ? (
         <Input value={query} placeholder="Search options…" onChange={(event) => setQuery(event.target.value)} />
       ) : null}

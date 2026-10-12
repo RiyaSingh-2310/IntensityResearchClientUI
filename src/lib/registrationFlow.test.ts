@@ -50,6 +50,13 @@ const validAccount = {
   confirmPassword: 'PanelTest1',
 }
 assert.deepEqual(validateRegisterStep(validAccount, 'account', sections), {})
+assert.equal(
+  validateRegisterStep({ ...validAccount, firstName: 'Mary Jane', lastName: "O'Connor" }, 'account', sections).firstName,
+  undefined,
+)
+assert.ok(validateRegisterStep({ ...validAccount, firstName: 'José', lastName: 'Anne-Marie' }, 'account', sections).firstName === undefined)
+assert.ok(validateRegisterStep({ ...validAccount, firstName: 'Riya2' }, 'account', sections).firstName)
+assert.ok(validateRegisterStep({ ...validAccount, firstName: 'A'.repeat(31) }, 'account', sections).firstName)
 
 const missingIndustry = validateRegisterForm(validAccount, sections, registerSteps)
 assert.ok(missingIndustry['q-27'])

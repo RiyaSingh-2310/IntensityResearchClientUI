@@ -1,5 +1,6 @@
 import { questionPanels, type QuestionPanel } from '@/content/questionnaires/groups'
 import { additionalProfileKinds, type AdditionalProfileKind } from '@/content/questionnaires'
+import { countError, countMaxDigits, isCountQuestion } from './countField'
 import { asNumber } from './utils'
 
 export interface ProfileQuestionOption {
@@ -198,6 +199,10 @@ export function validateProfileQuestions(questions: ProfileQuestion[], answers: 
       errors[questionErrorKey(question.key)] =
         question.fieldType === 'text' ? 'Please answer this question.' : question.fieldType === 'multi' ? 'Please select at least one option.' : 'Please select an option.'
       continue
+    }
+    if (question.fieldType === 'text' && typeof chosen === 'string' && isCountQuestion(question.label)) {
+      const message = countError(chosen, countMaxDigits(question.label))
+      if (message) errors[questionErrorKey(question.key)] = message
     }
     const otherSelected = otherOption(question)
     if (otherSelected && selectedKeys(value).includes(otherSelected.key) && !other) {

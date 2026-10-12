@@ -4,7 +4,9 @@ import type { RegisterPayload } from '@/types/auth'
 import { validateQuestions, type ProfileSections } from './profileQuestions'
 
 export const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-export const NAME_PATTERN = /^[\p{L}][\p{L}\s'.-]*$/u
+/** Letters, including accented characters, plus spaces, hyphens, and apostrophes. */
+export const NAME_PATTERN = /^[\p{L}][\p{L}\s'.’-]*$/u
+export const NAME_ERROR = 'Use letters only. Spaces, hyphens, and apostrophes are allowed.'
 export const PHONE_PATTERN = /^\d{7,15}$/
 export const NAME_MAX_LENGTH = 30
 export const PHONE_MAX_DIGITS = 15
@@ -51,6 +53,19 @@ export const emptyRegisterForm: RegisterPayload = {
   acceptPrivacy: false,
 }
 
+export function sanitizeName(value: string, maxLength = NAME_MAX_LENGTH) {
+  return value.replace(/[^\p{L}\s'.’-]/gu, '').slice(0, maxLength)
+}
+
+/** Message when typed or pasted text includes digits or other characters a name cannot contain. */
+export function rejectedNameMessage(raw: string, maxLength = NAME_MAX_LENGTH) {
+  if (!raw) return ''
+  const lettersOnly = raw.replace(/[^\p{L}\s'.’-]/gu, '')
+  if (lettersOnly !== raw) return NAME_ERROR
+  if (lettersOnly.length > maxLength) return `Use ${maxLength} characters or fewer.`
+  return ''
+}
+
 export function validateNewPassword(password: string, confirmPassword: string) {
   const errors: Record<string, string> = {}
   if (password.length < 8) errors.password = 'Use at least 8 characters.'
@@ -80,10 +95,10 @@ function validateAccount(form: RegisterPayload) {
   const lastName = form.lastName.trim()
   if (!firstName) errors.firstName = 'First name is required.'
   else if (firstName.length > NAME_MAX_LENGTH) errors.firstName = 'First name must be 30 characters or fewer.'
-  else if (!NAME_PATTERN.test(firstName)) errors.firstName = 'Enter a valid first name.'
+  else if (!NAME_PATTERN.test(firstName)) errors.firstName = NAME_ERROR
   if (!lastName) errors.lastName = 'Last name is required.'
   else if (lastName.length > NAME_MAX_LENGTH) errors.lastName = 'Last name must be 30 characters or fewer.'
-  else if (!NAME_PATTERN.test(lastName)) errors.lastName = 'Enter a valid last name.'
+  else if (!NAME_PATTERN.test(lastName)) errors.lastName = NAME_ERROR
   if (!EMAIL_PATTERN.test(form.email.trim())) errors.email = 'Enter a valid email address.'
   const phoneError = validatePhone(form.phoneCountry, form.phone)
   if (phoneError) errors.phone = phoneError

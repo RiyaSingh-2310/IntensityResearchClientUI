@@ -1,10 +1,12 @@
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Field } from '@/components/ui/field'
 import { Input, ReadOnlyInput } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import { SearchableSelect } from '@/components/forms/SearchableSelect'
-import { answerDisplay, type AnswerValue, type AnswerValues, type FormOption, type FormQuestion } from '@/lib/profileQuestions'
+import { countMaxDigits, isCountQuestion, rejectedCountMessage, sanitizeCount } from '@/lib/countField'
+import { isPostalQuestionLabel, postalRuleForCountry, sanitizePostalInput } from '@/lib/postalCode'
+import { answerDisplay, isCountryQuestion, type AnswerValue, type AnswerValues, type FormOption, type FormQuestion } from '@/lib/profileQuestions'
 import { cn } from '@/lib/utils'
 
 function fieldId(question: FormQuestion) {
@@ -79,6 +81,22 @@ export function OnboardingFields({
   /** Question ids that stay visible but cannot be changed. */
   readOnlyKeys?: readonly string[]
 }) {
+  const [countHints, setCountHints] = useState<Record<string, string>>({})
+  const countryQuestion = questions.find((question) => isCountryQuestion(question))
+  const postalQuestion = questions.find((question) => isPostalQuestionLabel(question.label))
+  const countryValue = countryQuestion && typeof values[countryQuestion.key] === 'string' ? values[countryQuestion.key] : ''
+  const countryLabel = countryQuestion?.options.find((option) => option.value === countryValue)?.label ?? ''
+
+  function changeAnswer(question: FormQuestion, next: AnswerValue) {
+    onChange(question.key, next)
+    if (!isCountryQuestion(question) || !postalQuestion || typeof next !== 'string') return
+    const current = values[postalQuestion.key]
+    if (typeof current !== 'string' || !current) return
+    const nextCountry = question.options.find((option) => option.value === next)?.label ?? ''
+    const cleaned = sanitizePostalInput(nextCountry, current)
+    if (cleaned !== current) onChange(postalQuestion.key, cleaned)
+  }
+
   return (
     <div className="mt-6 grid gap-6">
       {questions.map((question) => {
@@ -95,15 +113,35 @@ export function OnboardingFields({
         }
 
         if (question.fieldType === 'text') {
+          const postal = isPostalQuestionLabel(question.label)
+          const count = isCountQuestion(question.label)
+          const rule = postal ? postalRuleForCountry(countryLabel) : null
+          const digits = count ? countMaxDigits(question.label) : undefined
           return (
-            <Field key={question.key} label={question.label} htmlFor={id} required={question.required} error={error} hint={question.hint}>
+            <Field key={question.key} label={question.label} htmlFor={id} required={question.required} error={countHints[question.key] || error} hint={question.hint}>
               <Input
                 id={id}
-                maxLength={question.maxLength}
+                type="text"
+                inputMode={count || rule?.mode === 'digits' || rule?.mode === 'zip' ? 'numeric' : undefined}
+                autoComplete={postal ? 'postal-code' : undefined}
+                maxLength={digits ?? rule?.maxLength ?? question.maxLength}
                 aria-required={question.required || undefined}
                 value={typeof value === 'string' ? value : ''}
                 onBlur={() => onBlur?.(question.key)}
-                onChange={(event) => onChange(question.key, event.target.value)}
+                onChange={(event) => {
+                  const raw = event.target.value
+                  const next = count
+                    ? sanitizeCount(raw, digits ?? 7)
+                    : postal
+                      ? sanitizePostalInput(countryLabel, raw)
+                      : raw
+                  if (count) {
+                    const message = rejectedCountMessage(raw, digits ?? 7)
+                    setCountHints((current) => ((current[question.key] ?? '') === message ? current : { ...current, [question.key]: message }))
+                  }
+                  onChange(question.key, next)
+                  if (postal || count) onBlur?.(question.key)
+                }}
               />
             </Field>
           )
@@ -124,7 +162,7 @@ export function OnboardingFields({
                   onBlur={() => onBlur?.(question.key)}
                   onChange={(label) => {
                     const match = question.options.find((option) => option.label === label)
-                    onChange(question.key, match?.value ?? '')
+                    changeAnswer(question, match?.value ?? '')
                   }}
                 />
               ) : (
@@ -135,7 +173,7 @@ export function OnboardingFields({
                   options={question.options}
                   aria-required={question.required || undefined}
                   onBlur={() => onBlur?.(question.key)}
-                  onChange={(event) => onChange(question.key, event.target.value)}
+                  onChange={(event) => changeAnswer(question, event.target.value)}
                 />
               )}
             </Field>

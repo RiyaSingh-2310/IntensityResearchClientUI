@@ -1,6 +1,5 @@
 import type { ReactNode } from 'react'
 import { findCountry } from '@/content/countries'
-import { additionalProfileLabels, type AdditionalProfileKind } from '@/content/questionnaires'
 import { PROFILE_SECTION_IDS, profileSectionCopy } from '@/content/profileQuestions'
 import { answerDisplay, type ProfileSections } from '@/lib/profileQuestions'
 import type { RegisterPayload } from '@/types/auth'
@@ -26,15 +25,7 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 const yesNo = (value: boolean) => (value ? 'Yes' : 'No')
 const agreed = (value: boolean) => (value ? 'Agreed' : 'Not agreed')
 
-export function ReviewStep({
-  form,
-  sections,
-  panelKinds = [],
-}: {
-  form: RegisterPayload
-  sections: ProfileSections
-  panelKinds?: readonly AdditionalProfileKind[]
-}) {
+export function ReviewStep({ form, sections }: { form: RegisterPayload; sections: ProfileSections }) {
   const dial = findCountry(form.phoneCountry)?.dial
   const phone = form.phone ? `${dial ? `+${dial} ` : ''}${form.phone}` : ''
 
@@ -58,11 +49,6 @@ export function ReviewStep({
           </Section>
         ) : null,
       )}
-      {panelKinds.length ? (
-        <Section title="Additional panels">
-          <Row label="Selected panels" value={panelKinds.map((kind) => additionalProfileLabels[kind]).join(', ')} />
-        </Section>
-      ) : null}
       <Section title="Privacy & consent">
         <Row label="Terms & Conditions and Privacy Policy" value={agreed(form.acceptTerms)} />
         <Row label="Data sharing for research" value={agreed(form.acceptPrivacy)} />

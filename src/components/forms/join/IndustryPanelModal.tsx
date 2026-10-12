@@ -9,19 +9,23 @@ export function IndustryPanelModal({
   options,
   selected,
   onToggle,
-  onClose,
+  onContinue,
+  onDismiss,
+  error = '',
 }: {
   open: boolean
   options: AdditionalProfileKind[]
   selected: readonly AdditionalProfileKind[]
   onToggle: (kind: AdditionalProfileKind) => void
-  onClose: () => void
+  onContinue: () => void
+  onDismiss: () => void
+  error?: string
 }) {
   return (
-    <Dialog open={open} onOpenChange={(next) => { if (!next) onClose() }}>
+    <Dialog open={open} onOpenChange={(next) => { if (!next) onDismiss() }}>
       <DialogContent
         title="Add a research panel"
-        description="Choose the panels that match this industry. You can select more than one, then continue registration."
+        description="Choose the panels you want to add for your industry. You can select more than one. Each panel is saved when you complete its questions."
       >
         <fieldset className="grid gap-2">
           <legend className="sr-only">Additional panels</legend>
@@ -41,8 +45,16 @@ export function IndustryPanelModal({
             )
           })}
         </fieldset>
-        <div className="mt-5 flex justify-end">
-          <Button type="button" onClick={onClose}>
+        {error ? (
+          <p className="mt-3 text-sm text-danger" role="alert">
+            {error}
+          </p>
+        ) : null}
+        <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <Button type="button" variant="ghost" onClick={onDismiss}>
+            Not now
+          </Button>
+          <Button type="button" onClick={onContinue}>
             Continue
           </Button>
         </div>
