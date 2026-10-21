@@ -32,6 +32,8 @@ export interface AuthSuccessData {
 export interface DropdownOption {
   id: number
   name: string
+  /** Parent option id. Industry sub-categories point at their top-level industry. `0` means none. */
+  ref_id?: number
 }
 
 export interface OnboardingQuestion {

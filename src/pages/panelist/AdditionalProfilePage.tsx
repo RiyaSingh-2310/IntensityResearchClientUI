@@ -31,10 +31,21 @@ import {
 
 const noQuestions: ProfileQuestion[] = []
 import { sessionProfileRecord, useAdditionalProfileSync, useSessionProfiles } from '@/lib/additionalProfileSession'
+import { useIndustryEligibility } from '@/lib/industryEligibility'
+import { availableProfileKinds } from '@/lib/industryPanels'
 import { omitKey } from '@/lib/utils'
 import { EmptyState, ErrorState, LoadingSkeleton } from '@/components/shared/PageState'
 import { ApiRequestError } from '@/services/errors'
 import { additionalProfileService } from '@/services/additionalProfile.service'
+
+function focusFirstInvalid() {
+  window.setTimeout(() => {
+    const target = document.querySelector<HTMLElement>('[aria-invalid="true"]')
+    if (!target) return
+    target.focus({ preventScroll: true })
+    target.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }, 0)
+}
 
 function isKind(value: string | null): value is AdditionalProfileKind {
   return additionalProfileKinds.includes(value as AdditionalProfileKind)
@@ -50,9 +61,14 @@ export function AdditionalProfilePage() {
   const view = params.get('view')
   const viewing = isKind(view) && answers[view] ? view : null
   const editing = isKind(requested) ? requested : null
+  const industry = useIndustryEligibility()
   const stored = viewing ? answers[viewing] : undefined
   const introKind = editing ?? viewing
   const intro = introKind ? additionalProfileIntro[introKind] : null
+  const creating = Boolean(editing && !answers[editing])
+  const industryPending = industry.status === 'idle' || industry.status === 'loading'
+  const creationAllowed =
+    !creating || (industry.status === 'ready' && industry.eligible.includes(editing as AdditionalProfileKind))
 
   useEffect(() => {
     let cancelled = false
@@ -92,19 +108,47 @@ export function AdditionalProfilePage() {
           <ErrorState message={loadError} onRetry={() => window.location.reload()} />
         ) : null}
         {hydrated && editing ? (
-          <PanelWizard
-            key={editing}
-            kind={editing}
-            initial={answers[editing]}
-            onCancel={() => setParams({})}
-            onSaved={() => setParams({})}
-          />
+          creating && (industryPending || industry.status === 'error') ? (
+            industry.status === 'error' ? (
+              <ErrorState message="Your industry could not be loaded, so a new profile cannot be started." onRetry={() => window.location.reload()} />
+            ) : (
+              <LoadingSkeleton rows={3} />
+            )
+          ) : !creationAllowed ? (
+            <Card>
+              <CardContent className="grid gap-4 pt-6">
+                <h2 className="font-display text-2xl text-ink">This profile is not available</h2>
+                <p className="text-sm leading-6 text-ink-soft">
+                  {industry.status === 'ready' && industry.label
+                    ? `${additionalProfileLabels[editing]} is not offered for your industry. Existing profiles stay saved.`
+                    : 'Save the industry your organization operates in before adding a profile. Profile options stay hidden until that answer is saved.'}
+                </p>
+                <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+                  <Button type="button" variant="outline" onClick={() => setParams({})}>Back</Button>
+                  {industry.status === 'ready' && !industry.label ? (
+                    <Button asChild>
+                      <Link to={paths.profile}>Go to profile</Link>
+                    </Button>
+                  ) : null}
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <PanelWizard
+              key={editing}
+              kind={editing}
+              initial={answers[editing]}
+              onCancel={() => setParams({})}
+              onSaved={() => setParams({})}
+            />
+          )
         ) : hydrated && stored && viewing ? (
           <ProfileOverview kind={viewing} answers={stored} onEdit={() => setParams({ type: viewing })} />
         ) : hydrated && !loadError ? (
           <Overview
             answers={answers}
             order={order}
+            industry={industry}
             onOpen={(kind) => setParams({ view: kind })}
             onBegin={(kind) => setParams({ type: kind })}
           />
@@ -117,38 +161,70 @@ export function AdditionalProfilePage() {
 function Overview({
   answers,
   order,
+  industry,
   onOpen,
   onBegin,
 }: {
   answers: Partial<Record<AdditionalProfileKind, AdditionalAnswerMap>>
   order: AdditionalProfileKind[]
+  industry: ReturnType<typeof useIndustryEligibility>
   onOpen: (kind: AdditionalProfileKind) => void
   onBegin: (kind: AdditionalProfileKind) => void
 }) {
   const created = order.filter((kind) => answers[kind])
-  const available = additionalProfileKinds.filter((kind) => !answers[kind])
+  const industryReady = industry.status === 'ready'
+  const available = industryReady ? availableProfileKinds(industry.label, created) : []
   const preferred = defaultAdditionalProfileKind(available)
   const [picked, setPicked] = useState<AdditionalProfileKind | null>(preferred)
   const selected = picked && available.includes(picked) ? picked : preferred
+  const showIndustryGate = industry.status === 'error' || (industryReady && !industry.label)
 
   return (
     <div className="grid gap-4">
-      {created.map((kind) => (
-        <Card key={kind}>
-          <CardContent className="flex flex-col gap-4 pt-6 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-start gap-3">
-              <Users className="mt-1 size-4 shrink-0 text-brand" />
-              <div>
-                <h2 className="font-display text-2xl text-ink">{additionalProfileIntro[kind].title}</h2>
-                <p className="mt-1 text-sm leading-6 text-ink-soft">{additionalProfileSummaries[kind]}</p>
+      {created.map((kind) => {
+        const kept = industryReady && industry.label && !industry.eligible.includes(kind)
+        return (
+          <Card key={kind}>
+            <CardContent className="flex flex-col gap-4 pt-6 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex min-w-0 items-start gap-3">
+                <Users className="mt-1 size-4 shrink-0 text-brand" />
+                <div className="min-w-0">
+                  <h2 className="font-display text-2xl text-ink">{additionalProfileIntro[kind].title}</h2>
+                  <p className="mt-1 text-sm leading-6 text-ink-soft">{additionalProfileSummaries[kind]}</p>
+                  {kept ? (
+                    <p className="mt-2 text-sm leading-6 text-muted">
+                      This profile was saved earlier. Changing industry does not delete it or its answers.
+                    </p>
+                  ) : null}
+                </div>
               </div>
-            </div>
-            <Button type="button" variant="outline" onClick={() => onOpen(kind)}>
-              View questions
-            </Button>
+              <Button type="button" variant="outline" onClick={() => onOpen(kind)}>
+                View questions
+              </Button>
+            </CardContent>
+          </Card>
+        )
+      })}
+      {showIndustryGate ? (
+        <Card>
+          <CardContent className="grid gap-4 pt-6">
+            <h2 className="font-display text-2xl text-ink">Industry needed</h2>
+            <p className="text-sm leading-6 text-ink-soft">
+              {industry.status === 'error'
+                ? 'Your industry could not be loaded, so new profile options are hidden. Existing profiles stay available.'
+                : 'Panel options stay hidden until the industry your organization operates in is saved on your profile.'}
+            </p>
+            {industry.status === 'ready' ? (
+              <div className="flex justify-end">
+                <Button asChild>
+                  <Link to={paths.profile}>Go to profile</Link>
+                </Button>
+              </div>
+            ) : null}
           </CardContent>
         </Card>
-      ))}
+      ) : null}
+      {industry.status === 'loading' || industry.status === 'idle' ? <LoadingSkeleton rows={2} /> : null}
       {available.length > 0 && selected ? (
         <Card>
           <CardContent className="grid gap-4 pt-6">
@@ -352,7 +428,9 @@ function PanelWizard({
       for (const question of nextQuestions) copy[question.key] = true
       return copy
     })
-    return Object.keys(next).length === 0
+    const valid = Object.keys(next).length === 0
+    if (!valid) focusFirstInvalid()
+    return valid
   }
 
   function goTo(index: number) {

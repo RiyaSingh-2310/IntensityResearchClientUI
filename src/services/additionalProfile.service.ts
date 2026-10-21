@@ -72,6 +72,7 @@ async function loadState(): Promise<AdditionalProfileState> {
   replaceAdditionalProfiles(records)
   return {
     profiles: sessionProfileRecords().map(toRecord),
+    // Uncreated kinds only. Callers must still remove kinds the saved industry cannot create.
     creatableKinds: missingSessionProfiles(),
   }
 }

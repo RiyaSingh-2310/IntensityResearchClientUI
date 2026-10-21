@@ -1,5 +1,7 @@
 import { createContext, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { composePhone } from '@/content/countries'
+import { invalidateIndustryEligibility } from '@/lib/industryEligibility'
+import { clearPanelPromptAfterLogin, markPanelPromptAfterLogin } from '@/lib/panelSelection'
 import { takePendingOnboarding } from '@/lib/pendingOnboarding'
 import { ADDITIONAL_PROFILE_PROMPT_KEY } from '@/services/additionalProfile.service'
 import { authService } from '@/services/auth.service'
@@ -114,10 +116,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (pending.length) {
       try {
         await onboardingService.saveAnswers(pending)
+        invalidateIndustryEligibility()
       } catch {
         /* Profile settings can retry; login must still succeed. */
       }
     }
+    markPanelPromptAfterLogin(session.user.id)
   }, [completeSession])
 
   const register = useCallback(async (payload: RegisterPayload): Promise<RegisterOutcome> => {
@@ -140,6 +144,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       clearToken()
       sessionStorage.removeItem(ADDITIONAL_PROFILE_PROMPT_KEY)
+      clearPanelPromptAfterLogin()
       setConnectionError('')
       setUser(null)
     }

@@ -5,19 +5,19 @@ import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { paths } from '@/config/paths'
 import { additionalProfileKinds, type AdditionalProfileKind } from '@/content/questionnaires'
-import { PROFILE_SECTION_IDS } from '@/content/profileQuestions'
 import { useAuth } from '@/hooks/useAuth'
 import { useAdditionalProfileSync, useSessionProfiles } from '@/lib/additionalProfileSession'
-import { industryAnswerLabel, panelsForIndustryLabel } from '@/lib/industryPanels'
-import { panelPromptFor, readPanelSelection, savePanelSelection, type PanelPrompt } from '@/lib/panelSelection'
-import { answersToFormValues, buildProfileSections } from '@/lib/profileQuestions'
+import { invalidateIndustryEligibility, useIndustryEligibility } from '@/lib/industryEligibility'
+import {
+  clearPanelPromptAfterLogin,
+  initialPanelSelection,
+  panelPromptFor,
+  panelPromptLoginToken,
+  readPanelSelection,
+  savePanelSelection,
+  type PanelPrompt,
+} from '@/lib/panelSelection'
 import { ADDITIONAL_PROFILE_PROMPT_KEY, additionalProfileService } from '@/services/additionalProfile.service'
-import { onboardingService } from '@/services/onboarding.service'
-
-type IndustryState =
-  | { status: 'idle' }
-  | { status: 'error' }
-  | { status: 'ready'; label: string }
 
 export function AdditionalProfilePrompt() {
   const { user, ready } = useAuth()
@@ -28,37 +28,20 @@ export function AdditionalProfilePrompt() {
   const closed = closedFor != null && closedFor === userId
   const { order } = useSessionProfiles()
   const sync = useAdditionalProfileSync()
-  const [industryRecord, setIndustryRecord] = useState<{ userId: number | null; state: IndustryState }>({
-    userId: null,
-    state: { status: 'idle' },
-  })
-  const industry = industryRecord.userId === userId ? industryRecord.state : { status: 'idle' as const }
-  const [reloadKey, setReloadKey] = useState(0)
+  const industry = useIndustryEligibility()
   const [saveError, setSaveError] = useState('')
+  const loginToken = userId == null ? null : panelPromptLoginToken(userId)
+  const [pinnedIndustry, setPinnedIndustry] = useState<{ token: string; label: string } | null>(null)
+  if (!loginToken) {
+    if (pinnedIndustry != null) setPinnedIndustry(null)
+  } else if (industry.status === 'ready' && pinnedIndustry?.token !== loginToken) {
+    setPinnedIndustry({ token: loginToken, label: industry.label })
+  }
 
   useEffect(() => {
     if (userId == null) return
     void additionalProfileService.getState().catch(() => undefined)
   }, [userId])
-
-  useEffect(() => {
-    if (userId == null) return
-    let cancelled = false
-    Promise.all([onboardingService.getQuestions(), onboardingService.getAnswers()])
-      .then(([questions, saved]) => {
-        if (cancelled) return
-        const sections = buildProfileSections(questions.steps)
-        const profileQuestions = PROFILE_SECTION_IDS.flatMap((id) => sections[id])
-        const label = industryAnswerLabel(sections, answersToFormValues(saved.answers, profileQuestions))
-        setIndustryRecord({ userId, state: { status: 'ready', label } })
-      })
-      .catch(() => {
-        if (!cancelled) setIndustryRecord({ userId, state: { status: 'error' } })
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [userId, reloadKey])
 
   const created = additionalProfileKinds.filter((kind) => order.includes(kind))
   const savedChoice = userId == null ? null : readPanelSelection(userId)
@@ -66,7 +49,7 @@ export function AdditionalProfilePrompt() {
     industry.status === 'ready'
       ? panelPromptFor({
           industryLabel: industry.label,
-          eligible: panelsForIndustryLabel(industry.label),
+          eligible: industry.eligible,
           created,
           saved: savedChoice,
         })
@@ -75,45 +58,48 @@ export function AdditionalProfilePrompt() {
   const industryLabel = industry.status === 'ready' ? industry.label : ''
   const promptStatus = prompt?.status ?? ''
   const pendingKey = prompt?.status === 'retry' ? prompt.pending.join(',') : ''
+  const options = prompt?.status === 'choose' || prompt?.status === 'retry' ? prompt.options : []
+  const pending = prompt?.status === 'retry' ? prompt.pending : []
   const selectionKey = `${userId ?? ''}:${industryLabel}:${promptStatus}:${pendingKey}`
-  const [draft, setDraft] = useState<{ key: string; selected: AdditionalProfileKind[] }>({ key: '', selected: [] })
+  const [draft, setDraft] = useState<{ key: string; selected: AdditionalProfileKind | null }>({ key: '', selected: null })
   if (draft.key !== selectionKey) {
     setDraft({
       key: selectionKey,
-      selected: promptStatus === 'retry' && pendingKey ? (pendingKey.split(',') as AdditionalProfileKind[]) : [],
+      selected: initialPanelSelection(options, pending),
     })
   }
-  const selected = draft.selected
+  const selected = draft.selected != null && options.includes(draft.selected) ? draft.selected : initialPanelSelection(options, pending)
   const dismissed = userId != null && (closed || sessionStorage.getItem(ADDITIONAL_PROFILE_PROMPT_KEY) === String(userId))
   const onPanelForm = location.pathname === paths.additionalProfile
-  const waiting = !ready || userId == null || sync === 'pending' || industry.status === 'idle'
+  const waiting = !ready || userId == null || sync === 'pending' || industry.status === 'idle' || industry.status === 'loading'
   const profileError = sync === 'error'
   const needsAttention = profileError || industry.status === 'error' || (prompt != null && prompt.status !== 'complete')
-  const open = !waiting && !dismissed && !onPanelForm && needsAttention
+  const pinnedLabel = pinnedIndustry?.token === loginToken ? pinnedIndustry.label : null
+  const industryChangedAfterLogin = pinnedLabel != null && (industry.status !== 'ready' || pinnedLabel !== industry.label)
+  const open = Boolean(loginToken) && !industryChangedAfterLogin && !waiting && !dismissed && !onPanelForm && needsAttention
 
   function close() {
+    clearPanelPromptAfterLogin()
     if (userId != null) sessionStorage.setItem(ADDITIONAL_PROFILE_PROMPT_KEY, String(userId))
     setClosedFor(userId)
   }
 
-  function toggle(kind: AdditionalProfileKind) {
-    setDraft((current) => ({
-      key: selectionKey,
-      selected: current.selected.includes(kind) ? current.selected.filter((item) => item !== kind) : [...current.selected, kind],
-    }))
+  function select(kind: AdditionalProfileKind) {
+    setDraft({ key: selectionKey, selected: kind })
   }
 
   function confirm() {
-    if (userId == null || industry.status !== 'ready' || !industry.label) return
+    if (userId == null || industry.status !== 'ready' || !industry.label || selected == null) return
+    if (!options.includes(selected)) return
     setSaveError('')
     try {
-      savePanelSelection(userId, { industry: industry.label, kinds: selected })
+      savePanelSelection(userId, { industry: industry.label, kinds: [selected] })
     } catch {
       setSaveError('Your panel choice could not be saved in this browser. Please try again.')
       return
     }
-    const next = selected.find((kind) => !created.includes(kind))
-    if (next) navigate(`${paths.additionalProfile}?type=${next}`)
+    clearPanelPromptAfterLogin()
+    if (!created.includes(selected)) navigate(`${paths.additionalProfile}?type=${selected}`)
   }
 
   if ((industry.status === 'error' || profileError) && open) {
@@ -125,8 +111,7 @@ export function AdditionalProfilePrompt() {
             <Button variant="ghost" onClick={close}>Not now</Button>
             <Button
               onClick={() => {
-                setIndustryRecord({ userId, state: { status: 'idle' } })
-                setReloadKey((key) => key + 1)
+                invalidateIndustryEligibility()
                 void additionalProfileService.getState().catch(() => undefined)
               }}
             >
@@ -154,14 +139,12 @@ export function AdditionalProfilePrompt() {
     )
   }
 
-  const options = prompt?.status === 'choose' || prompt?.status === 'retry' ? prompt.options : []
-
   return (
     <IndustryPanelModal
       open={open && sync === 'ready' && options.length > 0}
       options={options}
       selected={selected}
-      onToggle={toggle}
+      onSelect={select}
       onContinue={confirm}
       onDismiss={close}
       error={saveError}

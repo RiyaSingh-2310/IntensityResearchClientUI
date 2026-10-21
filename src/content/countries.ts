@@ -263,6 +263,31 @@ export function findCountry(code: string) {
   return countries.find((country) => country.code === code)
 }
 
+function compactCountryName(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/[\u2019']/g, '')
+    .replace(/&/g, ' and ')
+    .replace(/[^a-z0-9]+/g, '')
+}
+
+const countryCodeByName = new Map(countries.map((country) => [compactCountryName(country.name), country.code]))
+
+/** Questionnaire labels that do not match the dialling-code list word for word. */
+const countryNameAliases: Record<string, string> = {
+  democraticrepublicofthecongo: 'CD',
+  republicofthecongo: 'CG',
+  stateofpalestine: 'PS',
+  holyseevaticancity: 'VA',
+}
+
+/** ISO code for a country name, including the Country dropdown labels from the API. */
+export function countryCodeForName(name: string) {
+  const key = compactCountryName(name)
+  if (!key) return undefined
+  return countryNameAliases[key] ?? countryCodeByName.get(key)
+}
+
 export function countryName(code: string) {
   return findCountry(code)?.name ?? ''
 }

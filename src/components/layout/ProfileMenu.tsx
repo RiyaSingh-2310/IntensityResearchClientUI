@@ -3,9 +3,11 @@ import { ChevronDown, LogOut, Settings, UserRound, Users } from 'lucide-react'
 import { useEffect, useId, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { paths } from '@/config/paths'
-import { additionalProfileKinds, additionalProfileLabels, type AdditionalProfileKind } from '@/content/questionnaires'
+import { additionalProfileLabels, type AdditionalProfileKind } from '@/content/questionnaires'
 import { useAuth } from '@/hooks/useAuth'
 import { useSessionProfiles } from '@/lib/additionalProfileSession'
+import { useIndustryEligibility } from '@/lib/industryEligibility'
+import { availableProfileKinds } from '@/lib/industryPanels'
 import { useMotionConfig } from '@/lib/motion'
 import { givenName, initials, mediaUrl } from '@/lib/utils'
 
@@ -34,8 +36,10 @@ export function ProfileMenu({
   const [profilesOpen, setProfilesOpen] = useState(false)
   const closeTimer = useRef<number | null>(null)
   const { answers: sessionProfiles, order } = useSessionProfiles()
+  const industry = useIndustryEligibility()
   const createdProfiles = order.filter((kind) => sessionProfiles[kind])
-  const creatableProfiles = additionalProfileKinds.filter((kind) => !sessionProfiles[kind])
+  const creatableProfiles =
+    industry.status === 'ready' ? availableProfileKinds(industry.label, createdProfiles) : []
 
   function showProfiles() {
     if (closeTimer.current) window.clearTimeout(closeTimer.current)
@@ -73,9 +77,7 @@ export function ProfileMenu({
     }
   }, [open, onOpenChange, profilesOpen])
 
-  useEffect(() => {
-    if (!open) setProfilesOpen(false)
-  }, [open])
+  if (!open && profilesOpen) setProfilesOpen(false)
 
   if (!user) return null
 
@@ -141,6 +143,7 @@ export function ProfileMenu({
               open={profilesOpen}
               created={createdProfiles}
               creatable={creatableProfiles}
+              needsIndustry={industry.status === 'ready' && !industry.label}
               onShow={showProfiles}
               onHide={hideProfilesSoon}
               onToggle={() => (profilesOpen ? closeProfiles() : showProfiles())}
@@ -185,6 +188,7 @@ function AdditionalProfileMenu({
   open,
   created,
   creatable,
+  needsIndustry,
   onShow,
   onHide,
   onToggle,
@@ -194,6 +198,7 @@ function AdditionalProfileMenu({
   open: boolean
   created: AdditionalProfileKind[]
   creatable: AdditionalProfileKind[]
+  needsIndustry: boolean
   onShow: () => void
   onHide: () => void
   onToggle: () => void
@@ -242,21 +247,32 @@ function AdditionalProfileMenu({
               role="menuitem"
               to={`${paths.additionalProfile}?view=${kind}`}
               onClick={onNavigate}
-              className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-ink-soft hover:bg-cream hover:text-ink"
+              className="flex items-start gap-2.5 rounded-lg px-3 py-2 text-sm leading-5 text-ink-soft hover:bg-cream hover:text-ink"
             >
-              <Users className="size-4" />
-              {additionalProfileLabels[kind]}
+              <Users className="mt-0.5 size-4 shrink-0" />
+              <span className="min-w-0">{additionalProfileLabels[kind]}</span>
             </Link>
           ))}
-          {creatable.length || created.length === 0 ? (
+          {needsIndustry ? (
+            <Link
+              role="menuitem"
+              to={paths.profile}
+              onClick={onNavigate}
+              className="flex items-start gap-2.5 rounded-lg px-3 py-2 text-sm leading-5 font-medium text-ink hover:bg-cream"
+            >
+              <Users className="mt-0.5 size-4 shrink-0" />
+              <span className="min-w-0">Add your industry</span>
+            </Link>
+          ) : null}
+          {creatable.length > 0 ? (
             <Link
               role="menuitem"
               to={`${paths.additionalProfile}?add=1`}
               onClick={onNavigate}
-              className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-ink hover:bg-cream"
+              className="flex items-start gap-2.5 rounded-lg px-3 py-2 text-sm leading-5 font-medium text-ink hover:bg-cream"
             >
-              <Users className="size-4" />
-              Add Profile
+              <Users className="mt-0.5 size-4 shrink-0" />
+              <span className="min-w-0">Add Profile</span>
             </Link>
           ) : null}
         </div>

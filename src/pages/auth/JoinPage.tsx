@@ -232,7 +232,7 @@ export function JoinPage() {
             <EmptyState title="Registration questions are unavailable right now." description="Please try again shortly." />
           ) : null}
           {!questionsState.loading && !questionsState.error && hasQuestions ? (
-            <form ref={formRef} className="overflow-hidden rounded-3xl border border-line bg-white p-5 shadow-card sm:p-8" onSubmit={onSubmit} noValidate>
+            <form ref={formRef} className="rounded-3xl border border-line bg-white p-5 shadow-card sm:p-8" onSubmit={onSubmit} noValidate>
               <h2 className="font-display text-3xl text-ink sm:text-4xl">Create Your Intensity Research Account</h2>
               <p className="mt-2 text-sm leading-6 text-ink-soft">
                 Join our research community and receive survey opportunities that match your profile.
@@ -267,6 +267,7 @@ export function JoinPage() {
                       <PrivacyStep form={form} errors={shownErrors} update={update} onBlur={touch} />
                     ) : (
                       <OnboardingFields
+                        className="mt-6"
                         questions={sections[current.id]}
                         values={form.answers}
                         errors={shownErrors}

@@ -25,10 +25,10 @@ export function Field({ label, htmlFor, required, error, hint, className, childr
 
   return (
     <div className={cn('space-y-2', className)}>
-      <Label htmlFor={htmlFor} className="flex items-center gap-1">
-        {label}
+      <Label htmlFor={htmlFor} className="block leading-5">
+        <span>{label}</span>
         {required ? (
-          <span className="text-danger" aria-hidden="true">
+          <span className="ml-1 text-danger" aria-hidden="true">
             *
           </span>
         ) : null}

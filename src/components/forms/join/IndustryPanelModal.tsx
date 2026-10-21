@@ -1,5 +1,4 @@
 import { Button } from '@/components/ui/button'
-import { Checkbox } from '@/components/ui/checkbox'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { additionalProfileLabels, type AdditionalProfileKind } from '@/content/questionnaires'
 import { cn } from '@/lib/utils'
@@ -8,15 +7,15 @@ export function IndustryPanelModal({
   open,
   options,
   selected,
-  onToggle,
+  onSelect,
   onContinue,
   onDismiss,
   error = '',
 }: {
   open: boolean
   options: AdditionalProfileKind[]
-  selected: readonly AdditionalProfileKind[]
-  onToggle: (kind: AdditionalProfileKind) => void
+  selected: AdditionalProfileKind | null
+  onSelect: (kind: AdditionalProfileKind) => void
   onContinue: () => void
   onDismiss: () => void
   error?: string
@@ -25,12 +24,12 @@ export function IndustryPanelModal({
     <Dialog open={open} onOpenChange={(next) => { if (!next) onDismiss() }}>
       <DialogContent
         title="Add a research panel"
-        description="Choose the panels you want to add for your industry. You can select more than one. Each panel is saved when you complete its questions."
+        description="Choose one panel for your industry. You can add the next panel after you finish this one."
       >
         <fieldset className="grid gap-2">
           <legend className="sr-only">Additional panels</legend>
           {options.map((kind) => {
-            const checked = selected.includes(kind)
+            const checked = selected === kind
             return (
               <label
                 key={kind}
@@ -39,7 +38,13 @@ export function IndustryPanelModal({
                   checked ? 'border-brand bg-brand-soft/50' : 'border-line',
                 )}
               >
-                <Checkbox checked={checked} onCheckedChange={() => onToggle(kind)} />
+                <input
+                  type="radio"
+                  name="research-panel"
+                  className="mt-0.5 size-4 shrink-0 accent-brand"
+                  checked={checked}
+                  onChange={() => onSelect(kind)}
+                />
                 <span className="min-w-0 flex-1 font-medium">Add {additionalProfileLabels[kind]}</span>
               </label>
             )
@@ -54,7 +59,7 @@ export function IndustryPanelModal({
           <Button type="button" variant="ghost" onClick={onDismiss}>
             Not now
           </Button>
-          <Button type="button" onClick={onContinue}>
+          <Button type="button" onClick={onContinue} disabled={selected == null}>
             Continue
           </Button>
         </div>

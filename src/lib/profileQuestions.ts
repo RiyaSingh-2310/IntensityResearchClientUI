@@ -18,6 +18,8 @@ export type AnswerValues = Record<string, AnswerValue>
 export interface FormOption {
   value: string
   label: string
+  /** Parent option id when this choice is a sub-category, such as an industry specialty. */
+  parentValue?: string
 }
 
 export interface FormQuestion {
@@ -61,7 +63,14 @@ function fromApi(question: OnboardingQuestion, section: ProfileSectionId): FormQ
     label: question.question_text,
     fieldType,
     required: Boolean(asNumber(question.is_required)),
-    options: question.options.map((option) => ({ value: String(option.id), label: option.name })),
+    options: question.options.map((option) => {
+      const parentId = asNumber(option.ref_id)
+      return {
+        value: String(option.id),
+        label: option.name,
+        ...(parentId ? { parentValue: String(parentId) } : {}),
+      }
+    }),
     maxLength: fieldType === 'text' ? ANSWER_TEXT_MAX : undefined,
     api: question,
   }
@@ -79,6 +88,26 @@ export function buildProfileSections(steps: OnboardingStepGroup[]): ProfileSecti
 export function hasAnswer(value: AnswerValue | undefined) {
   if (Array.isArray(value)) return value.length > 0
   return typeof value === 'string' && value.trim().length > 0
+}
+
+export function isOtherLabel(label: string) {
+  return /^(others?)$/i.test(label.trim())
+}
+
+function otherOption(question: FormQuestion) {
+  return question.options.find((option) => isOtherLabel(option.label))
+}
+
+function selectedIds(value: AnswerValue | undefined) {
+  if (Array.isArray(value)) return value
+  return typeof value === 'string' && value ? [value] : []
+}
+
+function otherTextFor(question: FormQuestion, values: AnswerValues) {
+  const other = otherOption(question)
+  if (!other || !selectedIds(values[question.key]).includes(other.value)) return ''
+  const text = values[`${question.key}__other`]
+  return typeof text === 'string' ? text.trim() : ''
 }
 
 const COUNTRY_QUESTION = normalizeLabel('Which country do you currently live or work in?')
@@ -113,6 +142,9 @@ export function validateQuestions(questions: FormQuestion[], values: AnswerValue
       const postalError = postalCodeError(countryLabel, value)
       if (postalError) errors[`q-${question.key}`] = postalError
     }
+    if (otherOption(question) && selectedIds(value).includes(otherOption(question)?.value ?? '') && !otherTextFor(question, values)) {
+      errors[`q-${question.key}`] = 'Please specify your answer.'
+    }
   }
   return errors
 }
@@ -127,7 +159,7 @@ export function answerDisplay(question: FormQuestion, value: AnswerValue | undef
   return question.fieldType === 'text' ? value : optionLabel(question, value)
 }
 
-function answerFor(question: FormQuestion, value: AnswerValue): OnboardingAnswerInput | null {
+function answerFor(question: FormQuestion, value: AnswerValue, values: AnswerValues): OnboardingAnswerInput | null {
   const questionId = asNumber(question.api.id)
   if (question.fieldType === 'text') {
     const text = typeof value === 'string' ? value.trim().slice(0, ANSWER_TEXT_MAX) : ''
@@ -136,7 +168,9 @@ function answerFor(question: FormQuestion, value: AnswerValue): OnboardingAnswer
   const multiple = Array.isArray(value)
   const ids = (multiple ? value : [value]).map((item) => asNumber(item)).filter(Boolean)
   if (!ids.length) return null
-  return multiple ? { question_id: questionId, answer_ref_ids: ids } : { question_id: questionId, answer_ref_id: ids[0] }
+  const custom = otherTextFor(question, values).slice(0, ANSWER_TEXT_MAX)
+  const extra = custom ? { answer_text: custom } : {}
+  return multiple ? { question_id: questionId, answer_ref_ids: ids, ...extra } : { question_id: questionId, answer_ref_id: ids[0], ...extra }
 }
 
 export function buildProfileAnswers(questions: FormQuestion[], values: AnswerValues): BuiltAnswers {
@@ -144,7 +178,7 @@ export function buildProfileAnswers(questions: FormQuestion[], values: AnswerVal
   for (const question of questions) {
     const value = values[question.key]
     if (!hasAnswer(value)) continue
-    const built = answerFor(question, value)
+    const built = answerFor(question, value, values)
     if (built) answers.push(built)
   }
   return { answers, unmapped: [] }
@@ -185,6 +219,11 @@ export function answersForSave(existing: OnboardingAnswer[], questions: FormQues
     if (built) kept.set(id, built)
   }
   for (const built of buildProfileAnswers(questions, values).answers) kept.set(built.question_id, built)
+  for (const [id, built] of kept) {
+    const custom = values[`${id}__other`]
+    if (typeof custom !== 'string' || !custom.trim() || built.answer_text) continue
+    kept.set(id, { ...built, answer_text: custom.trim().slice(0, ANSWER_TEXT_MAX) })
+  }
   return [...kept.values()]
 }
 
@@ -236,6 +275,11 @@ export function answersToFormValues(answers: OnboardingAnswer[], questions: Form
     const chosen = Array.from(new Set(fromRefs.length ? fromRefs : fromText))
     if (!chosen.length) continue
     values[question.key] = question.fieldType === 'checkbox' ? chosen : chosen[0]
+    const other = otherOption(question)
+    const custom = String(rows[0]?.answer_text ?? '').trim()
+    if (other && chosen.includes(other.value) && custom && custom.toLowerCase() !== other.label.toLowerCase()) {
+      values[`${question.key}__other`] = custom
+    }
   }
   return values
 }

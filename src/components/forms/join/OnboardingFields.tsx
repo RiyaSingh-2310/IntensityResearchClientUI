@@ -6,7 +6,7 @@ import { Select } from '@/components/ui/select'
 import { SearchableSelect } from '@/components/forms/SearchableSelect'
 import { countMaxDigits, isCountQuestion, rejectedCountMessage, sanitizeCount } from '@/lib/countField'
 import { isPostalQuestionLabel, postalRuleForCountry, sanitizePostalInput } from '@/lib/postalCode'
-import { answerDisplay, isCountryQuestion, type AnswerValue, type AnswerValues, type FormOption, type FormQuestion } from '@/lib/profileQuestions'
+import { answerDisplay, isCountryQuestion, isOtherLabel, type AnswerValue, type AnswerValues, type FormOption, type FormQuestion } from '@/lib/profileQuestions'
 import { cn } from '@/lib/utils'
 
 function fieldId(question: FormQuestion) {
@@ -57,6 +57,15 @@ function ChoiceGroup({
   )
 }
 
+function selectedIds(value: AnswerValue | undefined) {
+  if (Array.isArray(value)) return value
+  return typeof value === 'string' && value ? [value] : []
+}
+
+function otherChoice(question: FormQuestion) {
+  return question.options.find((option) => isOtherLabel(option.label))
+}
+
 function toggleOption(selected: string[], option: FormOption) {
   if (selected.includes(option.value)) return selected.filter((item) => item !== option.value)
   return [...selected, option.value]
@@ -72,6 +81,7 @@ export function OnboardingFields({
   onChange,
   onBlur,
   readOnlyKeys = [],
+  className,
 }: {
   questions: FormQuestion[]
   values: AnswerValues
@@ -80,6 +90,7 @@ export function OnboardingFields({
   onBlur?: (key: string) => void
   /** Question ids that stay visible but cannot be changed. */
   readOnlyKeys?: readonly string[]
+  className?: string
 }) {
   const [countHints, setCountHints] = useState<Record<string, string>>({})
   const countryQuestion = questions.find((question) => isCountryQuestion(question))
@@ -89,6 +100,8 @@ export function OnboardingFields({
 
   function changeAnswer(question: FormQuestion, next: AnswerValue) {
     onChange(question.key, next)
+    const other = otherChoice(question)
+    if (other && !selectedIds(next).includes(other.value)) onChange(`${question.key}__other`, '')
     if (!isCountryQuestion(question) || !postalQuestion || typeof next !== 'string') return
     const current = values[postalQuestion.key]
     if (typeof current !== 'string' || !current) return
@@ -98,7 +111,7 @@ export function OnboardingFields({
   }
 
   return (
-    <div className="mt-6 grid gap-6">
+    <div className={cn('grid gap-5', className)}>
       {questions.map((question) => {
         const id = fieldId(question)
         const error = errors[`q-${question.key}`]
@@ -149,13 +162,20 @@ export function OnboardingFields({
 
         if (question.fieldType === 'dropdown') {
           const current = typeof value === 'string' ? value : ''
-          const searchable = question.options.length > 12
+          const searchable = question.options.length > 12 || question.options.some((option) => option.parentValue)
+          const specify = error === 'Please specify your answer.'
           return (
-            <Field key={question.key} label={question.label} htmlFor={id} required={question.required} error={error} hint={question.hint}>
+            <div key={question.key} className="grid gap-3">
+            <Field label={question.label} htmlFor={id} required={question.required} error={specify ? undefined : error} hint={question.hint}>
               {searchable ? (
                 <SearchableSelect
                   id={id}
-                  options={question.options.map((option) => option.label)}
+                  options={question.options.map((option) => ({
+                    value: option.label,
+                    group: option.parentValue
+                      ? question.options.find((item) => item.value === option.parentValue)?.label
+                      : undefined,
+                  }))}
                   value={question.options.find((option) => option.value === current)?.label ?? ''}
                   invalid={Boolean(error)}
                   placeholder="Search options…"
@@ -177,13 +197,17 @@ export function OnboardingFields({
                 />
               )}
             </Field>
+            <OtherAnswer question={question} id={id} values={values} error={specify ? error : undefined} onChange={onChange} onBlur={onBlur} />
+            </div>
           )
         }
 
         if (question.fieldType === 'checkbox') {
           const selected = Array.isArray(value) ? value : typeof value === 'string' && value ? [value] : []
+          const specify = error === 'Please specify your answer.'
           return (
-            <ChoiceGroup key={question.key} id={id} label={question.label} required={question.required} hint={question.hint} error={error}>
+            <div key={question.key} className="grid gap-3">
+            <ChoiceGroup id={id} label={question.label} required={question.required} hint={question.hint} error={specify ? undefined : error}>
               <div className="grid gap-2 sm:grid-cols-2">
                 {question.options.map((option) => {
                   const checked = selected.includes(option.value)
@@ -192,7 +216,7 @@ export function OnboardingFields({
                       <Checkbox
                         checked={checked}
                         aria-invalid={Boolean(error) || undefined}
-                        onCheckedChange={() => onChange(question.key, toggleOption(selected, option))}
+                        onCheckedChange={() => changeAnswer(question, toggleOption(selected, option))}
                       />
                       <span className="min-w-0 flex-1">{option.label}</span>
                     </label>
@@ -200,11 +224,15 @@ export function OnboardingFields({
                 })}
               </div>
             </ChoiceGroup>
+            <OtherAnswer question={question} id={id} values={values} error={specify ? error : undefined} onChange={onChange} onBlur={onBlur} />
+            </div>
           )
         }
 
+        const specify = error === 'Please specify your answer.'
         return (
-          <ChoiceGroup key={question.key} id={id} label={question.label} required={question.required} hint={question.hint} error={error}>
+          <div key={question.key} className="grid gap-3">
+          <ChoiceGroup id={id} label={question.label} required={question.required} hint={question.hint} error={specify ? undefined : error}>
             <div className="grid gap-2 sm:grid-cols-2">
               {question.options.map((option) => {
                 const checked = value === option.value || (Array.isArray(value) && value.includes(option.value))
@@ -218,7 +246,7 @@ export function OnboardingFields({
                       checked={checked}
                       required={question.required}
                       aria-invalid={Boolean(error) || undefined}
-                      onChange={() => onChange(question.key, option.value)}
+                      onChange={() => changeAnswer(question, option.value)}
                     />
                     <span className="min-w-0 flex-1">{option.label}</span>
                   </label>
@@ -226,8 +254,42 @@ export function OnboardingFields({
               })}
             </div>
           </ChoiceGroup>
+          <OtherAnswer question={question} id={id} values={values} error={specify ? error : undefined} onChange={onChange} onBlur={onBlur} />
+          </div>
         )
       })}
     </div>
+  )
+}
+
+function OtherAnswer({
+  question,
+  id,
+  values,
+  error,
+  onChange,
+  onBlur,
+}: {
+  question: FormQuestion
+  id: string
+  values: AnswerValues
+  error?: string
+  onChange: (key: string, value: AnswerValue) => void
+  onBlur?: (key: string) => void
+}) {
+  const other = otherChoice(question)
+  if (!other || !selectedIds(values[question.key]).includes(other.value)) return null
+  const key = `${question.key}__other`
+  const text = values[key]
+  return (
+    <Field label="If Other" htmlFor={`${id}-other`} required error={error}>
+      <Input
+        id={`${id}-other`}
+        value={typeof text === 'string' ? text : ''}
+        placeholder="Enter your answer"
+        onBlur={() => onBlur?.(question.key)}
+        onChange={(event) => onChange(key, event.target.value)}
+      />
+    </Field>
   )
 }
