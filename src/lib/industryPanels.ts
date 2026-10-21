@@ -10,13 +10,14 @@ const HEALTHCARE_INDUSTRY = normalizeLabel('Healthcare & Pharmaceuticals')
  * Additional profiles offered for a saved industry category.
  *
  * Healthcare & Pharmaceuticals, including sub-industries whose dropdown parent is that
- * category, may create B2B Panel, Healthcare Professional Panel, and Patient Panel.
+ * category, may create Healthcare Professional Panel and Patient Panel.
+ * B2B Panel is not offered for that category.
  * Every other non-empty industry category may create B2B Panel and Patient Panel.
  * Verified categories include Financial Services, Technology & IT, and Consumer & Retail,
  * plus specialties such as Banking, IT services, and Education.
  * A missing industry answer is eligible for none of them.
  */
-const HEALTHCARE_PANELS: AdditionalProfileKind[] = ['b2b', 'healthcare', 'patient']
+const HEALTHCARE_PANELS: AdditionalProfileKind[] = ['healthcare', 'patient']
 const STANDARD_PANELS: AdditionalProfileKind[] = ['b2b', 'patient']
 
 export function isIndustryQuestion(label: string) {
