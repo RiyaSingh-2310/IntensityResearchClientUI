@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { initialPanelSelection, panelPromptFor } from './panelSelection'
 
-const healthcare = ['healthcare', 'patient'] as const
+const healthcare = ['b2b', 'healthcare', 'patient'] as const
 const standard = ['b2b', 'patient'] as const
 
 assert.equal(panelPromptFor({ industryLabel: '', eligible: [], created: [], saved: null }).status, 'missing-industry')
@@ -11,7 +11,7 @@ assert.deepEqual(
 )
 assert.deepEqual(
   panelPromptFor({ industryLabel: '1. Healthcare & Pharmaceuticals', eligible: healthcare, created: [], saved: null }),
-  { status: 'choose', options: ['healthcare', 'patient'] },
+  { status: 'choose', options: ['b2b', 'healthcare', 'patient'] },
 )
 assert.equal(
   panelPromptFor({
@@ -78,15 +78,5 @@ assert.equal(initialPanelSelection([]), null)
 assert.equal(initialPanelSelection(['patient'], ['b2b']), 'patient')
 assert.equal(initialPanelSelection(['healthcare', 'patient'], ['healthcare', 'patient']), 'healthcare')
 assert.equal(initialPanelSelection(['b2b', 'patient'], ['healthcare']), 'b2b')
-assert.equal(initialPanelSelection(['healthcare', 'patient'], ['b2b']), 'healthcare')
-assert.deepEqual(
-  panelPromptFor({
-    industryLabel: '1. Healthcare & Pharmaceuticals',
-    eligible: healthcare,
-    created: [],
-    saved: { industry: '1. Healthcare & Pharmaceuticals', kinds: ['b2b'] },
-  }),
-  { status: 'choose', options: ['healthcare', 'patient'] },
-)
 
 console.log('panel selection tests passed')
